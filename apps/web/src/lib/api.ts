@@ -18,7 +18,9 @@ import type {
 } from '@carvision/shared';
 import { getSessionToken } from './session';
 
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8787';
+// Oxiridagi "/" olib tashlanadi (aks holda `//api/...` bo'lib qoladi). Production build'da
+// VITE_API_URL berilmasa localhost'ga emas, shu domenning o'ziga (`/api/...`) so'rov ketadi.
+const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:8787' : '')).replace(/\/+$/, '');
 
 export class ApiRequestError extends Error {
   constructor(

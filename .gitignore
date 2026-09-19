@@ -1,8 +1,15 @@
+# Maxfiy kalitlar — HECH QACHON git'ga qo'shilmaydi (Vercel'da Environment Variables orqali beriladi)
 .env
 .env.*
+!.env.example
+
 node_modules/
 dist/
 build/
+
+# Vercel: `npm run build:vercel` yig'adigan API bundle'i va lokal Vercel sozlamalari
+apps/api/api/_app.mjs
+.vercel/
 
 *.local
 .DS_Store
@@ -10,4 +17,3 @@ Thumbs.db
 *.log
 .vite/
 coverage/
-.env

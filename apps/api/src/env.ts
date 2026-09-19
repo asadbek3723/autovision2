@@ -5,16 +5,6 @@ import { resolve } from 'node:path';
 config({ path: resolve(process.cwd(), '../../.env') });
 config({ path: resolve(process.cwd(), '.env') });
 
-function required(...names: string[]): string {
-  for (const name of names) {
-    const value = process.env[name];
-    if (value) return value;
-  }
-  // Vercel serverless platformada modul yuklanayotganda 500 Function Invocation Failed
-  // xatosi bermasligi uchun xatoni server yig'ish (handler) bosqichida boshqaramiz.
-  return '';
-}
-
 function optional(name: string, fallback = ''): string {
   return process.env[name] ?? fallback;
 }
