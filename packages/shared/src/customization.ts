@@ -16,6 +16,7 @@ export const CATEGORY_SLUGS = [
   'spoilers',
   'headlights',
   'taillights',
+  'grille',
   'paint',
   'interior',
   'detailing',
@@ -34,6 +35,7 @@ export const CATEGORY_LABELS: Record<CategorySlug, string> = {
   spoilers: 'Spoyler',
   headlights: 'Faralar',
   taillights: 'Orqa chiroqlar',
+  grille: 'Oldi panjara',
   paint: 'Rang / wrap',
   interior: 'Salon',
   detailing: 'Detailing',
@@ -250,44 +252,80 @@ export const CUSTOMIZATION_GROUPS: CustomizationGroup[] = [
   },
   {
     key: 'paint',
-    label: 'Rang / wrap',
+    label: 'Rang',
     category: 'paint',
     options: [
       {
-        value: 'satin-black',
-        label: 'Satin qora',
-        prompt: 'a satin black vinyl wrap',
-        swatch: '#17181A',
+        value: 'gloss-white',
+        label: 'Oq',
+        prompt: 'glossy pearl white (#F2F4F7)',
+        swatch: '#F2F4F7',
+      },
+      {
+        value: 'gloss-black',
+        label: 'Qora',
+        prompt: 'glossy jet black (#0D0E10)',
+        swatch: '#0D0E10',
+      },
+      {
+        value: 'silver',
+        label: 'Kumush',
+        prompt: 'metallic silver (#B9BEC5)',
+        swatch: '#B9BEC5',
       },
       {
         value: 'matte-grey',
-        label: 'Matte kulrang',
-        prompt: 'a matte nardo grey vinyl wrap',
+        label: 'Kulrang (matte)',
+        prompt: 'matte nardo grey (#6F7378)',
         swatch: '#6F7378',
       },
       {
-        value: 'gloss-white',
-        label: 'Gloss oq',
-        prompt: 'a gloss pearl white vinyl wrap',
-        swatch: '#EDEFF2',
+        value: 'satin-black',
+        label: 'Satin qora',
+        prompt: 'satin black (#17181A)',
+        swatch: '#17181A',
+      },
+      {
+        value: 'racing-red',
+        label: 'Qizil',
+        prompt: 'glossy racing red (#C1121F)',
+        swatch: '#C1121F',
       },
       {
         value: 'deep-blue',
         label: "To'q ko'k",
-        prompt: 'a deep metallic blue paint finish',
+        prompt: 'deep metallic blue (#1E3A8A)',
         swatch: '#1E3A8A',
       },
       {
-        value: 'racing-red',
-        label: 'Racing qizil',
-        prompt: 'a gloss racing red paint finish',
-        swatch: '#B3261E',
+        value: 'sky-blue',
+        label: "Ko'k",
+        prompt: 'bright metallic blue (#2F6BFF)',
+        swatch: '#2F6BFF',
       },
       {
         value: 'forest-green',
         label: 'Yashil',
-        prompt: 'a metallic british racing green paint finish',
+        prompt: 'metallic british racing green (#1F4D3A)',
         swatch: '#1F4D3A',
+      },
+      {
+        value: 'yellow',
+        label: 'Sariq',
+        prompt: 'glossy sunflower yellow (#F2B705)',
+        swatch: '#F2B705',
+      },
+      {
+        value: 'orange',
+        label: "To'q sariq",
+        prompt: 'glossy vivid orange (#F26A1B)',
+        swatch: '#F26A1B',
+      },
+      {
+        value: 'purple',
+        label: 'Binafsha',
+        prompt: 'deep metallic purple (#5B2A86)',
+        swatch: '#5B2A86',
       },
     ],
   },
@@ -339,12 +377,33 @@ export function findGroup(key: string): CustomizationGroup | undefined {
   return CUSTOMIZATION_GROUPS.find((g) => g.key === key);
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Katalog mahsulotini tanlash: option qiymati mahsulot id'si (UUID), kaliti esa
+ * mahsulot kategoriyasi (masalan headlights → <product uuid>).
+ * Statik variantlar (rang va h.k.) esa oddiy matn qiymati bilan saqlanadi.
+ */
+export function isProductOption(value: string | undefined | null): value is string {
+  return Boolean(value && UUID_RE.test(value));
+}
+
+/** generations.options ichidan tanlangan mahsulot id'lari */
+export function productIdsFromOptions(options: Record<string, string>): string[] {
+  return Object.values(options).filter(isProductOption);
+}
+
 /** Tanlangan option'lardan marketplace kategoriya slug'larini chiqaradi */
 export function categoriesFromOptions(options: Record<string, string>): CategorySlug[] {
   const slugs = new Set<CategorySlug>();
-  for (const key of Object.keys(options)) {
+  for (const [key, value] of Object.entries(options)) {
+    if (!value) continue;
+    if (isProductOption(value)) {
+      if ((CATEGORY_SLUGS as readonly string[]).includes(key)) slugs.add(key as CategorySlug);
+      continue;
+    }
     const group = findGroup(key);
-    if (group && options[key]) slugs.add(group.category);
+    if (group) slugs.add(group.category);
   }
   return [...slugs];
 }

@@ -32,11 +32,11 @@ export function HomeSteps({ baseDelay = 0 }: { baseDelay?: number }) {
   );
 
   return (
-    <ol className="space-y-3">
+    <ol className="space-y-3 lg:space-y-2.5">
       {steps.map((step, index) => (
         <li
           key={step.n}
-          className="cv-rise flex items-center gap-3.5 rounded-[20px] border border-border/70 bg-surface/70 p-3.5"
+          className="cv-rise flex items-center gap-3.5 rounded-[20px] border border-border/70 bg-surface/70 p-3.5 lg:p-3"
           style={{ animationDelay: `${baseDelay + index * 90}ms` }}
         >
           <span className="w-5 shrink-0 text-[12px] font-medium text-text-subtle tabular-nums">

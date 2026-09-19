@@ -1,5 +1,4 @@
 import { useRef, type ReactNode } from 'react';
-import { CUSTOMIZATION_GROUPS, type CustomizationOption } from '@carvision/shared';
 import { cn } from '../lib/format';
 import { haptic } from '../lib/haptics';
 import { Icon } from './ui/Icon';
@@ -11,13 +10,31 @@ import { Icon } from './ui/Icon';
  * foydalanuvchiga barcha variant birdan ko'rsatilmaydi.
  */
 
+/** Doktdagi bitta variant: rang (swatch) yoki katalog mahsuloti (rasm + narx) */
+export interface DockOption {
+  /** Rang uchun variant kodi, mahsulot uchun — mahsulot id'si */
+  value: string;
+  label: string;
+  swatch?: string;
+  /** Katalog mahsulotining fon-siz rasmi */
+  image?: string | null;
+  /** Masalan narx */
+  caption?: string;
+}
+
+export interface DockGroup {
+  key: string;
+  label: string;
+  options: DockOption[];
+}
+
 function OptionCard({
   option,
   groupLabel,
   selected,
   onClick,
 }: {
-  option: CustomizationOption | null;
+  option: DockOption | null;
   groupLabel: string;
   selected: boolean;
   onClick: () => void;
@@ -34,7 +51,8 @@ function OptionCard({
       aria-pressed={selected}
       aria-label={`${groupLabel}: ${label}`}
       className={cn(
-        'relative w-[88px] shrink-0 snap-start rounded-lg border p-2 text-left transition-colors lg:w-auto lg:p-2.5',
+        'relative shrink-0 snap-start rounded-lg border p-2 text-left transition-colors lg:w-auto lg:p-2.5',
+        option?.image ? 'w-[112px]' : 'w-[88px]',
         'outline-none focus-visible:ring-2 focus-visible:ring-accent-soft',
         selected
           ? 'border-accent bg-accent/10'
@@ -42,23 +60,40 @@ function OptionCard({
       )}
     >
       <span
-        className="mb-2 flex aspect-square w-full items-center justify-center rounded-md border border-white/8"
+        className={cn(
+          'mb-2 flex aspect-square w-full items-center justify-center overflow-hidden rounded-md border border-white/8',
+          option?.image && 'bg-[#eef0f3]'
+        )}
         style={option?.swatch ? { backgroundColor: option.swatch } : undefined}
       >
         {!option && <Icon name="x" size={18} className="text-text-subtle" />}
-        {option && !option.swatch && (
+        {option?.image && (
+          <img
+            src={option.image}
+            alt=""
+            loading="lazy"
+            draggable={false}
+            className="h-full w-full object-contain p-1.5"
+          />
+        )}
+        {option && !option.swatch && !option.image && (
           <Icon name="car" size={20} className="text-text-subtle" />
         )}
       </span>
 
       <span
         className={cn(
-          'block text-[11px] leading-tight lg:text-[13px]',
+          'line-clamp-2 block text-[11px] leading-tight lg:text-[13px]',
           selected ? 'text-text' : 'text-text-muted'
         )}
       >
         {label}
       </span>
+      {option?.caption && (
+        <span className="mt-1 block text-[11px] font-semibold text-accent-soft tabular-nums lg:text-[12px]">
+          {option.caption}
+        </span>
+      )}
 
       {selected && (
         <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-white">
@@ -70,6 +105,7 @@ function OptionCard({
 }
 
 interface ConfiguratorDockProps {
+  groups: DockGroup[];
   activeKey: string;
   options: Record<string, string>;
   onSelectGroup: (key: string) => void;
@@ -78,6 +114,7 @@ interface ConfiguratorDockProps {
 }
 
 export function ConfiguratorDock({
+  groups,
   activeKey,
   options,
   onSelectGroup,
@@ -86,8 +123,8 @@ export function ConfiguratorDock({
 }: ConfiguratorDockProps) {
   const optionsRef = useRef<HTMLDivElement>(null);
 
-  const activeGroup =
-    CUSTOMIZATION_GROUPS.find((group) => group.key === activeKey) ?? CUSTOMIZATION_GROUPS[0]!;
+  const activeGroup = groups.find((group) => group.key === activeKey) ?? groups[0];
+  if (!activeGroup) return null;
   const activeValue = options[activeGroup.key];
 
   return (
@@ -103,7 +140,7 @@ export function ConfiguratorDock({
         role="tablist"
         aria-label="Avtomobil qismlari"
       >
-        {CUSTOMIZATION_GROUPS.map((group) => {
+        {groups.map((group) => {
           const isActive = group.key === activeGroup.key;
           const hasSelection = Boolean(options[group.key]);
 

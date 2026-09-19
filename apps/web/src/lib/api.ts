@@ -147,17 +147,25 @@ export const api = {
     photo_url?: string;
     options: Record<string, string>;
     free_text?: string;
-  }) => post<{ generation: Generation }>('/api/generations', body),
+  }) =>
+    // AI rasm tahrirlash 20–40 soniya olishi mumkin — umumiy 35s limitdan uzunroq kutamiz
+    request<{ generation: Generation }>('/api/generations', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(90_000),
+    }),
   generations: () => get<{ generations: Generation[] }>('/api/generations'),
 
   products: (params: {
     categories?: string[];
+    ids?: string[];
     vehicle_model_id?: string;
     search?: string;
     limit?: number;
   }) => {
     const query = new URLSearchParams();
     if (params.categories?.length) query.set('categories', params.categories.join(','));
+    if (params.ids?.length) query.set('ids', params.ids.join(','));
     if (params.vehicle_model_id) query.set('vehicle_model_id', params.vehicle_model_id);
     if (params.search) query.set('search', params.search);
     if (params.limit) query.set('limit', String(params.limit));

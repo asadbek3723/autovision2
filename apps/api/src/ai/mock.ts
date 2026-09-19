@@ -2,7 +2,8 @@ import type { ImageEditProvider } from './types.js';
 
 /**
  * API kalitsiz ishlaydigan provider — butun flow'ni (upload → generate →
- * marketplace → order) kalitlarsiz sinash uchun. Original rasmni qaytaradi.
+ * marketplace → order) kalitlarsiz sinash uchun. Original rasmni O'ZGARTIRMAY qaytaradi
+ * (soxta natija rasmi ko'rsatilmaydi).
  */
 export const mockProvider: ImageEditProvider = {
   name: 'mock',

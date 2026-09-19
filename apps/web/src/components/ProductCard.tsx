@@ -15,9 +15,9 @@ export function ProductImage({
   className?: string;
 }) {
   return (
-    <div className={`relative w-full overflow-hidden rounded-md bg-surface-2 ${className}`}>
+    <div className={`relative w-full overflow-hidden rounded-md bg-[#eef0f3] ${className}`}>
       {src ? (
-        <img src={src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
+        <img src={src} alt={alt} loading="lazy" className="h-full w-full object-contain p-2" />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-text-subtle">
           <Icon name="package" size={28} />

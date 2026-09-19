@@ -1,16 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-  CUSTOMIZATION_GROUPS,
   angleLabel,
   colorLabel,
-  describeOptions,
 } from '@carvision/shared';
 import { api, ApiRequestError } from '../lib/api';
 import { cn } from '../lib/format';
 import { notifyHaptic as notify } from '../lib/haptics';
 import { useIsDesktop } from '../lib/useIsDesktop';
+import { buildDockGroups, describeSelection } from '../lib/studioGroups';
 import { useStudio } from '../store/useStudio';
 import { ConfiguratorDock } from '../components/ConfiguratorDock';
 import { HomeSteps } from '../components/HomeSteps';
@@ -27,12 +26,20 @@ export function StudioPage() {
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
 
-  const [activeGroup, setActiveGroup] = useState(CUSTOMIZATION_GROUPS[0]!.key);
+  const [activeGroup, setActiveGroup] = useState('paint');
   const [noteOpen, setNoteOpen] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
 
   const { car, photoUrl, options, freeText, setPhotoUrl, toggleOption, setFreeText, setGeneration, reset } =
     useStudio();
+
+  // Katalogdagi mahsulotlar + rang: konfigurator bo'limlari shundan tuziladi
+  const catalog = useQuery({
+    queryKey: ['catalog-products'],
+    queryFn: () => api.products({ limit: 100 }),
+    staleTime: 60_000,
+  });
+  const groups = useMemo(() => buildDockGroups(catalog.data?.products ?? []), [catalog.data]);
 
   const generate = useMutation({
     mutationFn: () =>
@@ -68,7 +75,7 @@ export function StudioPage() {
     return (
       // pb-[var(--nav-h)]: fixed bottom nav tagida CTA qolib ketmasligi uchun joy ajratiladi
       // (desktopda nav yuqorida, shuning uchun pastdan joy kerak emas)
-      <div className="relative flex min-h-dvh flex-col overflow-hidden px-5 pt-4 pb-[var(--nav-h)] lg:min-h-[calc(100dvh-var(--nav-h))] lg:justify-center lg:px-10 lg:pt-0 lg:pb-0">
+      <div className="relative flex min-h-dvh flex-col overflow-hidden px-5 pt-4 pb-[var(--nav-h)] lg:min-h-[calc(100dvh-var(--nav-h))] lg:justify-center lg:px-0 lg:pt-0 lg:pb-0">
         {/*
           O'ng yuqori burchakdagi yumshoq nur — haqiqiy avtomobil fotosurati
           qo'shilguncha shu joy uni almashtiradi (ArtDirection: HomeSteps.tsx
@@ -83,7 +90,7 @@ export function StudioPage() {
           }}
         />
 
-        <div className="relative flex flex-1 flex-col lg:mx-auto lg:w-full lg:max-w-[1240px] lg:flex-none lg:flex-row lg:items-center lg:gap-20 lg:py-12">
+        <div className="relative flex flex-1 flex-col lg:mx-auto lg:w-full lg:max-w-[1240px] lg:flex-none lg:flex-row lg:items-center lg:gap-20 lg:px-10 lg:py-8">
           <div className="flex flex-1 flex-col lg:w-[540px] lg:flex-none">
             {/* ------------------------------------------------- wordmark */}
             <div className="cv-rise mb-7 lg:hidden" style={{ animationDelay: '40ms' }}>
@@ -101,7 +108,7 @@ export function StudioPage() {
             </p>
 
             <h1
-              className="cv-rise t-hero mb-4 max-w-[15ch] lg:mb-6 lg:max-w-[12ch] lg:text-[68px] lg:leading-[1.02]"
+              className="cv-rise t-hero mb-4 max-w-[15ch] lg:mb-5 lg:max-w-[12ch] lg:text-[60px] lg:leading-[1.02]"
               style={{ animationDelay: '180ms' }}
             >
               Avtomobilingizni o‘zgartirishdan oldin{' '}
@@ -109,7 +116,7 @@ export function StudioPage() {
             </h1>
 
             <p
-              className="cv-rise mb-5 max-w-[17rem] text-[15px] leading-relaxed text-text-muted lg:mb-8 lg:max-w-md lg:text-[18px]"
+              className="cv-rise mb-5 max-w-[17rem] text-[15px] leading-relaxed text-text-muted lg:mb-6 lg:max-w-md lg:text-[17px]"
               style={{ animationDelay: '240ms' }}
             >
               Sun’iy intellekt avtomobilingizni realistik ko‘rinishda vizualizatsiya qiladi.
@@ -124,8 +131,9 @@ export function StudioPage() {
             <HomeSteps baseDelay={360} />
 
             {/* ---------------------------------------------------- CTA */}
-            <div className="mt-auto pt-5 pb-6 lg:mt-8 lg:max-w-md lg:pt-0 lg:pb-0">
+            <div className="mt-auto pt-5 pb-6 lg:mt-6 lg:pt-0 lg:pb-0">
               <div className="cv-rise" style={{ animationDelay: '640ms' }}>
+                <div className="lg:flex lg:items-center lg:gap-3">
                 <Button
                   fullWidth
                   size="lg"
@@ -149,15 +157,16 @@ export function StudioPage() {
                     type="button"
                     disabled
                     title="Jonli kamera faqat telefonda ishlaydi"
-                    className="mt-3 flex h-[52px] w-full cursor-not-allowed items-center justify-center gap-2 rounded-full border border-border bg-surface/50 text-[15px] text-text-subtle"
+                    className="flex h-[62px] shrink-0 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-border bg-surface/50 px-5 text-[15px] text-text-subtle"
                   >
                     <Icon name="camera" size={18} />
-                    Kamera bilan suratga olish
+                    Kamera
                     <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-[11px] font-medium text-text-muted">
                       Faqat telefonda
                     </span>
                   </button>
                 )}
+                </div>
 
                 {resuming && (
                   <button
@@ -181,7 +190,7 @@ export function StudioPage() {
   }
 
   /* -------------------------------------------------- konfigurator holati */
-  const selections = describeOptions(options);
+  const selections = describeSelection(options, groups);
   const photos = car.photos ?? [];
   const carLabel = [car.detected_brand, car.detected_model, car.year]
     .filter(Boolean)
@@ -265,6 +274,7 @@ export function StudioPage() {
 
       {/* --------------------------------------------------------- dok */}
       <ConfiguratorDock
+        groups={groups}
         activeKey={activeGroup}
         options={options}
         onSelectGroup={setActiveGroup}

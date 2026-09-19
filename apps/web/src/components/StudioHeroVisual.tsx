@@ -61,7 +61,7 @@ export function StudioHeroVisual() {
         </div>
 
         {/* suzuvchi kartochka */}
-        <div className="absolute -bottom-6 -left-8 flex items-center gap-3 rounded-2xl border border-white/10 bg-surface/90 px-4 py-3 shadow-2xl backdrop-blur-xl">
+        <div className="absolute -top-6 -right-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-surface/90 px-4 py-3 shadow-2xl backdrop-blur-xl">
           <span
             className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
             style={{ background: 'linear-gradient(145deg, #4a80ff, #1d46b8)' }}

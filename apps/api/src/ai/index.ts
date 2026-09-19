@@ -4,7 +4,8 @@ import { geminiProvider } from './gemini.js';
 import { openaiProvider } from './openai.js';
 import type { ImageEditProvider } from './types.js';
 
-export type { ImageEditProvider, EditImageInput, EditImageResult } from './types.js';
+export { AiError } from './types.js';
+export type { ImageEditProvider, EditImageInput, EditImageResult, ReferenceImage } from './types.js';
 
 const providers: Record<string, ImageEditProvider> = {
   mock: mockProvider,

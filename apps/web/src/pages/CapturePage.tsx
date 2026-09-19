@@ -487,7 +487,7 @@ export function CapturePage() {
               )}
 
               {/* SAQLASH TUGMASI */}
-              <div className="mt-auto pt-2 pb-1 lg:mx-auto lg:w-full lg:max-w-md">
+              <div className="mt-auto pt-2 pb-1 lg:mx-auto lg:mt-4 lg:w-full lg:max-w-md">
                 <Button
                   fullWidth
                   size="lg"
