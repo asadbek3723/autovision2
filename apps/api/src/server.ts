@@ -14,9 +14,12 @@ import { orderRoutes } from './routes/orders.js';
 import { sellerRoutes } from './routes/seller.js';
 
 export async function buildServer() {
-  const isVercel = Boolean(process.env.VERCEL || process.env.NOW_REGION);
+  // Serverless (Vercel / Netlify / AWS Lambda) muhitida pino-pretty bundle'da yo'q — faqat oddiy JSON log
+  const isServerless = Boolean(
+    process.env.VERCEL || process.env.NOW_REGION || process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME
+  );
   const app = Fastify({
-    logger: env.isDev && !isVercel
+    logger: env.isDev && !isServerless
       ? { transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss' } } }
       : { level: env.isDev ? 'debug' : 'info' },
     bodyLimit: 15 * 1024 * 1024,

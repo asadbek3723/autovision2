@@ -1,4 +1,4 @@
-import { findGroup, type Generation } from '@carvision/shared';
+import { categoriesFromOptions, findGroup, type Generation } from '@carvision/shared';
 import { api, ApiRequestError } from './api';
 import { quickRecolor } from './quickRecolor';
 
@@ -21,7 +21,33 @@ interface GenerateInput {
  * foydalanuvchi natijani ko'radi. Far, disk kabi qismlar uchun AI kerak — ular
  * zaxira rejimda qo'llanmaydi (natija sahifasida shu haqida aytiladi).
  */
+/**
+ * DEMO REJIMI: qanday rasm yoki mahsulot tanlanmasin, "Keyin" o'rnida doim shu tayyor
+ * natija ko'rsatiladi ("Oldin" — foydalanuvchining o'z rasmi). AI chaqirilmaydi.
+ * O'chirish uchun: DEMO_RESULT = false.
+ */
+const DEMO_RESULT = true;
+const DEMO_RESULT_IMAGE = '/images/demo-result.jpg';
+
 export async function generateWithFallback(input: GenerateInput): Promise<Generation> {
+  if (DEMO_RESULT) {
+    // AI ishlayotgandek qisqa kutish
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    return {
+      id: `demo-${Date.now()}`,
+      user_id: '',
+      car_id: input.carId,
+      original_image: input.sourceUrl,
+      generated_image: DEMO_RESULT_IMAGE,
+      prompt: '',
+      categories: categoriesFromOptions(input.options),
+      options: input.options,
+      status: 'done',
+      error: null,
+      created_at: new Date().toISOString(),
+    };
+  }
+
   try {
     const { generation } = await api.generate({
       car_id: input.carId,

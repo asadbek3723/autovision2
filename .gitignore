@@ -11,6 +11,10 @@ build/
 apps/api/api/_app.mjs
 .vercel/
 
+# Netlify: build paytida yig'iladigan API funksiyasi
+netlify/functions/api.mjs
+.netlify/
+
 *.local
 .DS_Store
 Thumbs.db
