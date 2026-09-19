@@ -3,6 +3,13 @@
   publish = "apps/web/dist"
 
 [[redirects]]
+  from = "/api/*"
+  to = "https://autovision2-api.vercel.app/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
