@@ -13,26 +13,25 @@ const CAR = '/images/b49d788e-38c8-45ef-9ad1-5475a421647f-960x540.jpg';
 /** Ikki yo'nalishli yumshoq so'nish: chapga va pastga/tepaga */
 const FADE: CSSProperties = {
   WebkitMaskImage:
-    'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, transparent 0%, #000 22%, #000 74%, transparent 100%)',
+    'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%)',
   WebkitMaskComposite: 'source-in',
   maskImage:
-    'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, transparent 0%, #000 22%, #000 74%, transparent 100%)',
+    'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%)',
   maskComposite: 'intersect',
 };
 
 export function StudioHeroVisual() {
   return (
     <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[62%] lg:block" aria-hidden="true">
-      {/* poydevor nuri: mashina ostidagi salqin ko'k yorug'lik */}
       <div
-        className="absolute inset-x-[8%] bottom-[10%] h-[34%] blur-3xl"
-        style={{ background: 'radial-gradient(60% 100% at 55% 100%, rgb(47 107 255 / 0.35), transparent 70%)' }}
-      />
-
-      <div
-        className="cv-rise absolute top-1/2 right-0 aspect-[16/9] w-[min(100%,960px)] -translate-y-1/2"
+        className="cv-rise absolute top-1/2 right-0 aspect-[16/9] w-[min(100%,1080px)] -translate-y-1/2"
         style={{ animationDelay: '150ms' }}
       >
+        {/* poydevor nuri: mashina ostidagi salqin ko'k yorug'lik */}
+        <div
+          className="absolute inset-x-[12%] -bottom-[4%] h-[26%] blur-3xl"
+          style={{ background: 'radial-gradient(60% 100% at 55% 100%, rgb(47 107 255 / 0.32), transparent 70%)' }}
+        />
         <img
           src={CAR}
           alt=""
