@@ -1,11 +1,13 @@
+.env
+.env.*
 node_modules/
 dist/
 build/
-.env
-.env.local
+
 *.local
 .DS_Store
 Thumbs.db
 *.log
 .vite/
 coverage/
+.env

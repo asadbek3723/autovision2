@@ -28,6 +28,18 @@ async function getApp(): Promise<FastifyInstance> {
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  const app = await getApp();
-  app.server.emit('request', req, res);
+  try {
+    const app = await getApp();
+    app.server.emit('request', req, res);
+  } catch (err: any) {
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(
+      JSON.stringify({
+        error: 'server_initialization_failed',
+        message: err?.message || 'Serverni ishga tushirishda xatolik yuz berdi.',
+        hint: 'Vercel Dashboard -> Settings -> Environment Variables bo\'limida SUPABASE_URL va SUPABASE_SERVICE_ROLE_KEY sozlamalari kiritilganini tekshiring.'
+      })
+    );
+  }
 }

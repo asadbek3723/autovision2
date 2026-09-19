@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import { pathToFileURL } from 'node:url';
-import { env } from './env.js';
+import { configProblems, env } from './env.js';
 import { HttpError } from './lib/errors.js';
 import { ensureBucket } from './lib/supabase.js';
 import { authRoutes } from './routes/auth.js';
@@ -19,13 +19,18 @@ export async function buildServer() {
       ? { transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss' } } }
       : true,
     bodyLimit: 15 * 1024 * 1024,
+    // Vercel/proxy orqasida haqiqiy klient IP'si X-Forwarded-For'dan olinadi —
+    // aks holda login/ro'yxatdan o'tish rate limit'i hamma foydalanuvchini bitta IP deb hisoblaydi.
+    trustProxy: true,
   });
 
-  // Auth cookie ishlatilmaydi (tma/Bearer header orqali), shuning uchun
-  // credentials kerak emas. Production'da faqat WEB_APP_URL'dan so'rov qabul
-  // qilinadi; devda barcha originlar ochiq (localtunnel/ngrok bilan sinash uchun).
+  // Auth cookie ishlatilmaydi (Bearer header orqali), shuning uchun credentials
+  // kerak emas. Production'da faqat WEB_APP_URL (vergul bilan bir nechta bo'lishi
+  // mumkin) dan so'rov qabul qilinadi; devda barcha originlar ochiq.
   await app.register(cors, {
-    origin: env.isDev ? true : env.webAppUrl,
+    origin: env.isDev ? true : env.webAppUrls,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    maxAge: 86400,
   });
   await app.register(multipart, { limits: { fileSize: 12 * 1024 * 1024, files: 1 } });
 
@@ -55,11 +60,34 @@ export async function buildServer() {
     });
   });
 
-  app.get('/health', async () => ({
-    ok: true,
-    ai_provider: env.aiProvider,
-    env: env.nodeEnv,
-  }));
+  const problems = configProblems();
+  const blocking = problems.filter((p) => p.level === 'blocking');
+  for (const p of problems) app.log.warn({ code: p.code }, p.message);
+
+  // Muhim sozlama yo'q bo'lsa har so'rovda tushunarsiz 500 emas, aniq 503 qaytariladi
+  // (/health va / doim javob beradi — Vercel deploy'ni tekshirish uchun).
+  app.addHook('onRequest', async (request, reply) => {
+    if (blocking.length === 0) return;
+    const path = request.url.split('?')[0];
+    if (path === '/health' || path === '/') return;
+    return reply.status(503).send({
+      error: 'misconfigured',
+      message: 'Server sozlanmagan. Vercel > Settings > Environment Variables ni tekshiring.',
+      problems: blocking.map((p) => ({ code: p.code, message: p.message })),
+    });
+  });
+
+  app.get('/', async () => ({ name: 'CarVision API', ok: blocking.length === 0 }));
+
+  app.get('/health', async (_request, reply) => {
+    if (blocking.length > 0) reply.status(503);
+    return {
+      ok: blocking.length === 0,
+      ai_provider: env.aiProvider,
+      env: env.nodeEnv,
+      problems: problems.map((p) => ({ level: p.level, code: p.code, message: p.message })),
+    };
+  });
 
   await app.register(authRoutes);
   await app.register(carRoutes);

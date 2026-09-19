@@ -5,9 +5,13 @@ import { env } from '../env.js';
  * Service role klienti — RLS'ni chetlab o'tadi.
  * Faqat serverda ishlatiladi; bu kalit hech qachon frontendga chiqmaydi.
  */
-export const db = createClient(env.supabaseUrl, env.supabaseServiceKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+export const db = createClient(
+  env.supabaseUrl || 'https://placeholder.supabase.co',
+  env.supabaseServiceKey || 'placeholder-service-key-for-init',
+  {
+    auth: { persistSession: false, autoRefreshToken: false },
+  }
+);
 
 const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
