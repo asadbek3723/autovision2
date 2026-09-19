@@ -67,24 +67,24 @@ function GuidanceBanner({ guidance, label }: { guidance: Guidance; label: string
   return (
     <div
       key={guidance.key}
-      className="cv-swap flex min-w-0 items-center gap-3 rounded-2xl bg-gradient-to-r from-black/55 via-black/35 to-transparent py-2 pr-4 pl-2"
+      className="cv-swap flex min-w-0 items-center gap-2.5 rounded-xl bg-black/45 px-3 py-1.5 backdrop-blur-xs border border-white/10"
       role="status"
       aria-live="polite"
     >
       <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white"
         style={{ background: ok ? GUIDE_COLORS.ok : 'rgba(255,255,255,0.14)' }}
       >
         <span className={cn('flex', arrowClass(guidance.icon))} style={{ transform: guidance.dir === 'back' ? 'scaleX(-1)' : undefined }}>
-          <CIcon name={ICON_FOR[guidance.icon]} size={24} strokeWidth={2.2} />
+          <CIcon name={ICON_FOR[guidance.icon]} size={18} strokeWidth={2.2} />
         </span>
       </span>
       <div className="min-w-0">
-        <p className="truncate text-[13px] leading-[18px] text-white/65" style={SHADOW}>
+        <p className="truncate text-[11px] leading-4 text-white/60" style={SHADOW}>
           Endi: {label}
         </p>
         <p
-          className="text-[26px] leading-[30px] font-semibold tracking-[-0.02em] text-white"
+          className="text-[17px] leading-5 font-semibold tracking-[-0.01em] text-white"
           style={{ ...SHADOW, color: ok ? '#6ff0b4' : '#ffffff' }}
         >
           {guidance.text}
@@ -112,17 +112,17 @@ function CriteriaPips({
   soft: Record<CriterionId, boolean>;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-full bg-black/55 px-4 py-2 backdrop-blur-sm" aria-hidden="true">
+    <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 backdrop-blur-xs border border-white/10" aria-hidden="true">
       {(Object.keys(PIP_LABELS) as CriterionId[]).map((id) => {
         const pass = passes[id];
         const isSoft = soft[id] && pass;
         return (
-          <span key={id} className="flex items-center gap-1.5 text-[12px] leading-4 text-white/80">
+          <span key={id} className="flex items-center gap-1 text-[11px] leading-3 text-white/75">
             <span
-              className="flex h-2.5 w-2.5 items-center justify-center rounded-full transition-colors duration-150"
+              className="flex h-2 w-2 items-center justify-center rounded-full transition-colors duration-150 shrink-0"
               style={{
                 background: isSoft ? 'transparent' : pass ? GUIDE_COLORS.ok : GUIDE_COLORS.bad,
-                border: isSoft ? '1.5px solid rgba(255,255,255,0.45)' : 'none',
+                border: isSoft ? '1px solid rgba(255,255,255,0.45)' : 'none',
               }}
             />
             {PIP_LABELS[id]}
@@ -310,46 +310,37 @@ export function LiveCapture({
         )}
       </div>
 
-      {/* --------------------------------------------- yuqori chap: 3D + ko'rsatma */}
+      {/* --------------------------------------------- yuqori chap: Ko'rsatma banner */}
       <div
-        className="pointer-events-none absolute flex items-start"
-        style={{ left: safeL, top: safeT, right: `calc(${safeR} + 168px)` }}
+        className="pointer-events-none absolute z-20 flex flex-col items-start gap-2"
+        style={{ left: safeL, top: safeT, maxWidth: 'calc(100vw - 220px)' }}
       >
-        <div className="shrink-0" style={{ width: 'clamp(168px, 26vw, 224px)' }}>
-          <CarGuide stateRef={guideRef} guide={guide} style={{ aspectRatio: '3 / 2', width: '100%' }} />
-          <p className="mt-2 text-[15px] leading-5 font-semibold text-white" style={SHADOW}>
-            {snap.angle.label}
-            <span className="ml-2 text-[13px] font-normal text-white/60 tabular-nums">{stepText}</span>
-          </p>
-        </div>
-        <div className="ml-3 min-w-0 flex-1 pt-1">
-          <GuidanceBanner guidance={snap.guidance} label={snap.angle.label} />
+        <GuidanceBanner guidance={snap.guidance} label={snap.angle.label} />
 
-          {snap.manualOffer && (
-            <div className="pointer-events-auto mt-2 flex flex-wrap items-center gap-2 rounded-xl bg-black/65 px-3 py-2 text-[13px] leading-[18px] text-white">
-              Kompas noaniq bo‘lishi mumkin.
-              <button
-                type="button"
-                onClick={actions.toggleCompass}
-                className="min-h-11 rounded-lg bg-white/15 px-3 font-medium active:bg-white/25"
-              >
-                Kompassiz davom etish
-              </button>
-              <button
-                type="button"
-                onClick={actions.takeShotManual}
-                className="min-h-11 rounded-lg bg-white px-3 font-medium text-black active:bg-white/80"
-              >
-                Qo‘lda olish
-              </button>
-            </div>
-          )}
-        </div>
+        {snap.manualOffer && (
+          <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-xl bg-black/75 p-2 text-[12px] text-white backdrop-blur-md border border-white/15">
+            Kompas noaniq bo‘lishi mumkin.
+            <button
+              type="button"
+              onClick={actions.toggleCompass}
+              className="min-h-9 rounded-lg bg-white/15 px-2.5 font-medium active:bg-white/25"
+            >
+              Kompassiz
+            </button>
+            <button
+              type="button"
+              onClick={actions.takeShotManual}
+              className="min-h-9 rounded-lg bg-white px-2.5 font-medium text-black active:bg-white/80"
+            >
+              Qo‘lda olish
+            </button>
+          </div>
+        )}
       </div>
 
       {/* --------------------------------------------------- yuqori o'ng: tugmalar */}
       <div
-        className="absolute flex items-center gap-2"
+        className="absolute z-20 flex items-center gap-2"
         style={{ right: safeR, top: safeT }}
       >
         <button
@@ -361,14 +352,14 @@ export function LiveCapture({
             unlockAudio();
           }}
           aria-label={muted ? 'Tovushni yoqish' : 'Tovushni o‘chirish'}
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-black/55 text-white backdrop-blur-sm active:bg-black/75"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-black/45 text-white backdrop-blur-xs border border-white/10 active:bg-black/75"
         >
-          <CIcon name={muted ? 'volume-off' : 'volume'} size={20} />
+          <CIcon name={muted ? 'volume-off' : 'volume'} size={18} />
         </button>
         <button
           type="button"
           onClick={actions.skip}
-          className="flex h-11 items-center rounded-xl bg-black/55 px-4 text-[15px] font-medium text-white/90 backdrop-blur-sm active:bg-black/75"
+          className="flex h-9 items-center rounded-lg bg-black/45 px-3 text-[13px] font-medium text-white/90 backdrop-blur-xs border border-white/10 active:bg-black/75"
         >
           O‘tkazish
         </button>
@@ -376,35 +367,75 @@ export function LiveCapture({
           type="button"
           onClick={onClose}
           aria-label="Yopish"
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-black/55 text-white backdrop-blur-sm active:bg-black/75"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-black/45 text-white backdrop-blur-xs border border-white/10 active:bg-black/75"
         >
-          <CIcon name="x" size={20} />
+          <CIcon name="x" size={18} />
         </button>
       </div>
 
       {/* Holat nishonlari */}
-      <div className="pointer-events-none absolute flex gap-2" style={{ right: safeR, top: `calc(${safeT} + 52px)` }}>
-        {demo && <span className="rounded-lg bg-warning/85 px-2 py-1 text-[12px] leading-4 font-medium text-black">Demo rejim</span>}
+      <div className="pointer-events-none absolute z-20 flex gap-1.5" style={{ right: safeR, top: `calc(${safeT} + 46px)` }}>
+        {demo && <span className="rounded-md bg-warning/85 px-1.5 py-0.5 text-[11px] font-medium text-black">Demo</span>}
         {!demo && !detectorReady && (
-          <span className="rounded-lg bg-black/60 px-2 py-1 text-[12px] leading-4 text-white/80">Aniqlash o‘chiq</span>
+          <span className="rounded-md bg-black/50 px-1.5 py-0.5 text-[11px] text-white/80">Aniqlash o‘chiq</span>
         )}
-        {compassOff && <span className="rounded-lg bg-black/60 px-2 py-1 text-[12px] leading-4 text-white/80">Kompassiz</span>}
+        {compassOff && <span className="rounded-md bg-black/50 px-1.5 py-0.5 text-[11px] text-white/80">Kompassiz</span>}
       </div>
 
-      {/* ------------------------------------------------- mezon nuqtalari */}
+      {/* ----------------------------------------------- chap past: 3D model (Ixcham) */}
       <div
-        className="pointer-events-none absolute inset-x-0 flex justify-center"
-        style={{ bottom: `calc(${safeB} + 84px)` }}
+        className="pointer-events-none absolute z-20 transition-opacity duration-200"
+        style={{ left: safeL, bottom: `calc(${safeB} + 56px)`, width: 'clamp(96px, 14vw, 124px)', opacity: 0.8 }}
+      >
+        <div className="rounded-xl border border-white/15 bg-black/40 p-1 backdrop-blur-xs">
+          <CarGuide stateRef={guideRef} guide={guide} style={{ aspectRatio: '3 / 2', width: '100%' }} />
+          <p className="mt-1 text-center text-[11px] font-semibold text-white/90 truncate" style={SHADOW}>
+            {snap.angle.label} <span className="text-[10px] font-normal text-white/60 tabular-nums">{stepText}</span>
+          </p>
+        </div>
+      </div>
+
+      {/* ----------------------------------------- o'ng taraf o'rta: Rasmga olish dumalog'i */}
+      <div
+        className="absolute z-30 flex items-center justify-center"
+        style={{ right: safeR, top: '50%', transform: 'translateY(-50%)' }}
+      >
+        <button
+          type="button"
+          onClick={actions.takeShotManual}
+          aria-label="Qo‘lda suratga olish"
+          className={cn(
+            'group relative flex items-center justify-center rounded-full border-4 transition-all duration-150 active:scale-95 shadow-2xl',
+            fallbackMode || snap.manualOffer
+              ? 'h-[68px] w-[68px] border-white bg-white/20 backdrop-blur-sm'
+              : 'h-[60px] w-[60px] border-white/60 bg-black/30 backdrop-blur-xs'
+          )}
+        >
+          <span
+            className="rounded-full transition-all duration-150"
+            style={{
+              width: fallbackMode || snap.manualOffer ? 48 : 42,
+              height: fallbackMode || snap.manualOffer ? 48 : 42,
+              backgroundColor: snap.phase === 'locked' ? GUIDE_COLORS.ok : '#ffffff',
+            }}
+          />
+        </button>
+      </div>
+
+      {/* ------------------------------------------------- mezon nuqtalari (Markaz pastda ixcham) */}
+      <div
+        className="pointer-events-none absolute inset-x-0 z-20 flex justify-center"
+        style={{ bottom: `calc(${safeB} + 52px)` }}
       >
         <CriteriaPips passes={snap.passes} soft={snap.soft} />
       </div>
 
-      {/* --------------------------------------------------------- pastki panel */}
+      {/* --------------------------------------------------------- pastki panel (Miniaturalar & Sanoq) */}
       <div
-        className="absolute inset-x-0 bottom-0 flex items-end gap-4 bg-gradient-to-t from-black/80 to-transparent pt-8"
-        style={{ paddingLeft: safeL, paddingRight: safeR, paddingBottom: safeB }}
+        className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between gap-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-6"
+        style={{ paddingLeft: `calc(${safeL} + 130px)`, paddingRight: `calc(${safeR} + 76px)`, paddingBottom: safeB }}
       >
-        <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto py-1">
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1 no-scrollbar">
           {shots.map((shot) => (
             <button
               key={shot.id}
@@ -412,90 +443,69 @@ export function LiveCapture({
               onClick={() => void actions.redo(shot.id)}
               aria-label={`Qayta olish: ${REQUIRED_ANGLES.find((a) => a.id === shot.angle)?.label ?? shot.angle}`}
               className={cn(
-                'cv-thumb-in relative h-11 w-16 shrink-0 overflow-hidden rounded-md border',
+                'cv-thumb-in relative h-9 w-13 shrink-0 overflow-hidden rounded-md border',
                 shot.status === 'failed' ? 'border-danger' : 'border-white/25'
               )}
             >
               <img src={shot.preview} alt="" className="h-full w-full object-cover" />
               {shot.status === 'uploading' && (
                 <span className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <Spinner size={14} />
+                  <Spinner size={12} />
                 </span>
               )}
               {shot.status === 'failed' && (
                 <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-danger">
-                  <CIcon name="alert" size={14} />
+                  <CIcon name="alert" size={12} />
                 </span>
               )}
               {shot.status === 'done' && (
-                <span className="absolute right-0.5 bottom-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/60 text-white/85">
-                  <CIcon name="redo" size={10} strokeWidth={2.4} />
+                <span className="absolute right-0.5 bottom-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-black/60 text-white/85">
+                  <CIcon name="redo" size={9} strokeWidth={2.4} />
                 </span>
               )}
             </button>
           ))}
         </div>
 
-        <div className="shrink-0 rounded-xl bg-black/65 px-4 py-2 text-center backdrop-blur-sm">
-          <p className="text-[10px] tracking-[0.1em] text-white/50 uppercase">Olindi</p>
-          <p className="text-[22px] leading-none font-semibold text-white tabular-nums">
-            {requiredCount}
-            <span className="text-[15px] font-normal text-white/45">/{REQUIRED_CAR_PHOTOS}</span>
-          </p>
-        </div>
+        {/* Ixcham rasm sanog'i va galereya */}
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="rounded-lg bg-black/50 border border-white/10 px-2.5 py-1 text-center backdrop-blur-xs">
+            <span className="text-[12px] font-medium text-white/80 tabular-nums">
+              Olindi <strong className="text-white font-semibold">{requiredCount}</strong>/{REQUIRED_CAR_PHOTOS}
+            </span>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          aria-label="Galereyadan yuklash"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black/55 text-white/90 backdrop-blur-sm active:bg-black/75"
-        >
-          <CIcon name="gallery" size={22} />
-        </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) actions.addFromFile(f);
-            e.target.value = '';
-          }}
-        />
-
-        {/* Qo'lda tugma: zaxira rejimlarda to'liq, aks holda kichik */}
-        <button
-          type="button"
-          onClick={actions.takeShotManual}
-          aria-label="Qo‘lda suratga olish"
-          className={cn(
-            'flex shrink-0 items-center justify-center rounded-full border-4 transition-all',
-            fallbackMode || snap.manualOffer
-              ? 'h-[72px] w-[72px] border-white bg-white/95 active:bg-white/70'
-              : 'h-14 w-14 border-white/40 bg-white/10 active:bg-white/25'
-          )}
-        >
-          <span
-            className="rounded-full"
-            style={{
-              width: fallbackMode || snap.manualOffer ? 52 : 38,
-              height: fallbackMode || snap.manualOffer ? 52 : 38,
-              backgroundColor: snap.phase === 'locked' ? GUIDE_COLORS.ok : 'rgb(255 255 255 / 0.25)',
-            }}
-          />
-        </button>
-
-        {acceptedCount >= 3 && !requiredDone && (
           <button
             type="button"
-            onClick={onFinish}
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-accent px-4 text-[15px] font-medium text-white active:bg-accent-strong"
+            onClick={() => fileRef.current?.click()}
+            aria-label="Galereyadan yuklash"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-black/50 text-white/90 backdrop-blur-xs border border-white/10 active:bg-black/75"
           >
-            Yakunlash
-            <CIcon name="arrow-right" size={16} />
+            <CIcon name="gallery" size={18} />
           </button>
-        )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) actions.addFromFile(f);
+              e.target.value = '';
+            }}
+          />
+
+          {acceptedCount >= 3 && !requiredDone && (
+            <button
+              type="button"
+              onClick={onFinish}
+              className="flex h-9 shrink-0 items-center gap-1 rounded-lg bg-accent px-3 text-[13px] font-medium text-white active:bg-accent-strong"
+            >
+              Yakunlash
+              <CIcon name="arrow-right" size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Flash */}

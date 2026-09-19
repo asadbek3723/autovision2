@@ -63,7 +63,8 @@ export function StudioPage() {
     const resuming = Boolean(car && !stageImage);
 
     return (
-      <div className="relative flex min-h-[calc(100dvh-var(--nav-h))] flex-col overflow-hidden px-5 pt-4">
+      // pb-[var(--nav-h)]: fixed bottom nav tagida CTA qolib ketmasligi uchun joy ajratiladi
+      <div className="relative flex min-h-dvh flex-col overflow-hidden px-5 pt-4 pb-[var(--nav-h)]">
         {/*
           O'ng yuqori burchakdagi yumshoq nur — haqiqiy avtomobil fotosurati
           qo'shilguncha shu joy uni almashtiradi (ArtDirection: HomeSteps.tsx
