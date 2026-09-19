@@ -196,7 +196,12 @@ export async function sellerRoutes(app: FastifyInstance) {
 
     try {
       const provider = getProvider();
-      const result = await provider.editImage({ image: buffer, mimeType: mime, prompt });
+      // Asl rasm allaqachon Storage'ga yuklangan — provayder uni URL orqali oladi
+      const result = await provider.editImage({
+        image: { url: baseImageUrl, label: 'seller product photo' },
+        references: [],
+        prompt,
+      });
       const resultUrl = await uploadImage(result.image, result.mimeType, `seller-generations/${seller.id}`);
 
       const { data: done } = await db

@@ -15,6 +15,7 @@ import {
   subscribeToSessionChanges,
 } from '../lib/session';
 import { AUTH_ENABLED } from '../lib/config';
+import { useStudio } from '../store/useStudio';
 
 interface AuthState {
   status: 'loading' | 'guest' | 'user' | 'seller';
@@ -52,6 +53,8 @@ function ensureGuestSession(throttle = false): Promise<AuthState> {
     .guest()
     .then((res): AuthState => {
       setSessionToken(res.token);
+      // Yangi mehmon — oldingi sessiyadagi mashina endi bu foydalanuvchiniki emas
+      useStudio.getState().ensureOwner(res.user.id);
       return { status: 'user', user: res.user, seller: null };
     })
     .catch((): AuthState => GUEST_STATE)
@@ -78,6 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const res = await api.me();
+      // Sessiya egasi o'zgargan bo'lsa (yangi mehmon), eski mashina bu foydalanuvchiniki
+      // emas — u bilan ishlash serverdan 404 qaytaradi, shuning uchun tozalaymiz.
+      useStudio.getState().ensureOwner(res.user.id);
       setState({
         status: res.user.role === 'seller' ? 'seller' : 'user',
         user: res.user,

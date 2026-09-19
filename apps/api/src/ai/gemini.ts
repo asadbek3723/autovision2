@@ -1,5 +1,5 @@
 import { env } from '../env.js';
-import { nearestAspectRatio } from '../lib/imageSniff.js';
+import { fetchImage } from '../lib/imageFetch.js';
 import { AiError, type ImageEditProvider } from './types.js';
 
 interface GeminiPart {
@@ -16,17 +16,23 @@ interface GeminiResponse {
 /** Google Gemini image editing (image-to-image, ko'p rasmli) */
 export const geminiProvider: ImageEditProvider = {
   name: 'gemini',
-  async editImage({ image, mimeType, prompt, references = [] }) {
+  async editImage({ image, references, prompt, aspectRatio }) {
     if (!env.geminiApiKey) throw new AiError('config', 'GEMINI_API_KEY sozlanmagan');
+
+    // Gemini inline base64 kutadi, shuning uchun rasmlarni o'zimiz yuklab olamiz
+    const [original, refs] = await Promise.all([
+      fetchImage(image.url),
+      Promise.all(references.map((ref) => fetchImage(ref.url))),
+    ]);
 
     // Tartib muhim: 1-rasm — mashina, keyin mahsulot reference'lari, oxirida ko'rsatma
     const parts: GeminiPart[] = [
       { text: 'IMAGE 1 (customer car photo — edit this one):' },
-      { inlineData: { mimeType, data: image.toString('base64') } },
+      { inlineData: { mimeType: original.mimeType, data: original.buffer.toString('base64') } },
     ];
-    references.forEach((ref, index) => {
-      parts.push({ text: `IMAGE ${index + 2} (${ref.label}):` });
-      parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.image.toString('base64') } });
+    refs.forEach((ref, index) => {
+      parts.push({ text: `IMAGE ${index + 2} (${references[index]!.label}):` });
+      parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.buffer.toString('base64') } });
     });
     parts.push({ text: prompt });
 
@@ -38,14 +44,11 @@ export const geminiProvider: ImageEditProvider = {
     // Gateway'lar (laozhang va h.k.) Bearer kutadi; Google'ga esa Bearer yuborilmaydi (OAuth deb o'ylaydi)
     if (!env.geminiBaseUrl.includes('googleapis.com')) headers.Authorization = `Bearer ${env.geminiApiKey}`;
 
-    // Asl rasm nisbatini so'raymiz — aks holda model kvadrat qaytarib, kadrni qirqadi
-    const aspectRatio = nearestAspectRatio(image);
-
     let response: Response;
     try {
       response = await fetch(url, {
         method: 'POST',
-        signal: AbortSignal.timeout(48_000),
+        signal: AbortSignal.timeout(36_000),
         headers,
         body: JSON.stringify({
           contents: [{ role: 'user', parts }],

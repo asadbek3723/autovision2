@@ -107,61 +107,82 @@ function buildCar(u: Uniforms): THREE.Group {
   patchZone(bodyMat, u, 1);
   patchZone(glassMat, u, 0.7);
 
+  /*
+   * Zamonaviy sedan silueti: past beltline, uzun kapot, qiya old oyna va
+   * fastback orqa. Nuqtalar [uzunlik, balandlik] — old tomon musbat Z'da.
+   */
   const lower = extrudeProfile(
     [
-      [-2.2, 0.32],
-      [-2.22, 0.82],
-      [-1.5, 0.94],
-      [-1.1, 0.96],
-      [1.1, 0.96],
-      [1.6, 0.9],
-      [2.15, 0.76],
-      [2.22, 0.52],
-      [2.16, 0.32],
+      [-2.26, 0.26], // orqa pastki
+      [-2.34, 0.56], // orqa bamper
+      [-2.28, 0.84], // bagaj qirrasi
+      [-1.55, 0.90], // bagaj qopqog'i
+      [-0.30, 0.96], // beltline
+      [1.15, 0.94], // oyna tagi (cowl)
+      [1.88, 0.86], // kapot
+      [2.26, 0.66], // burun
+      [2.36, 0.42], // old bamper
+      [2.14, 0.24], // splitter
     ],
-    1.7,
+    1.72,
     0.1
   );
   car.add(new THREE.Mesh(lower, bodyMat));
 
+  // Salon: old oyna ~31°, orqa oyna ~19° — coupe-sedan ko'rinishi
   const cabin = extrudeProfile(
     [
-      [-1.15, 0.94],
-      [-0.72, 1.4],
-      [0.5, 1.4],
-      [1.05, 0.94],
+      [-1.58, 0.88],
+      [-1.26, 1.22],
+      [-0.12, 1.36],
+      [0.56, 1.36],
+      [1.28, 0.92],
     ],
-    1.5,
+    1.52,
     0.08
   );
   car.add(new THREE.Mesh(cabin, glassMat));
 
+  // Bagaj ustidagi kichik spoyler qirrasi
+  const spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.58, 0.07, 0.3), bodyMat);
+  spoiler.position.set(0, 0.92, -2.02);
+  spoiler.rotation.x = -0.12;
+  car.add(spoiler);
+
   // G'ildiraklar: qora shina + och rim
+  // Kattaroq g'ildirak + yorqin alloy rim: zamonaviy proporsiya
   const tireMat = new THREE.MeshStandardMaterial({ color: 0x0a0b0d, roughness: 0.9, metalness: 0.05 });
-  const rimMat = new THREE.MeshStandardMaterial({ color: 0x8a919a, roughness: 0.3, metalness: 0.9 });
-  const tireGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.28, 28).rotateZ(Math.PI / 2);
-  const rimGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.3, 20).rotateZ(Math.PI / 2);
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0xb6bdc6, roughness: 0.22, metalness: 0.95 });
+  const tireGeo = new THREE.CylinderGeometry(0.40, 0.40, 0.29, 28).rotateZ(Math.PI / 2);
+  const rimGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.31, 24).rotateZ(Math.PI / 2);
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
       const tire = new THREE.Mesh(tireGeo, tireMat);
-      tire.position.set(sx * 0.88, 0.38, sz * 1.4);
+      tire.position.set(sx * 0.87, 0.40, sz * 1.46);
       const rim = new THREE.Mesh(rimGeo, rimMat);
       rim.position.copy(tire.position);
       car.add(tire, rim);
     }
   }
 
-  // Faralar: old (oq) va orqa (to'q qizil) — qaysi tomon old ekanini ko'rsatadi
-  const headMat = new THREE.MeshStandardMaterial({ color: 0xdfe9ff, emissive: 0xbcd0ff, emissiveIntensity: 0.9 });
-  const tailMat = new THREE.MeshStandardMaterial({ color: 0x4a1c1c, emissive: 0x2a0d0d, emissiveIntensity: 0.6 });
-  const lightGeo = new THREE.BoxGeometry(0.36, 0.09, 0.06);
+  // Faralar: ingichka LED chiziq (old) va to'liq kenglikdagi orqa chiroq paneli
+  const headMat = new THREE.MeshStandardMaterial({ color: 0xdfe9ff, emissive: 0xbcd0ff, emissiveIntensity: 1.1 });
+  const tailMat = new THREE.MeshStandardMaterial({ color: 0x5e1f1f, emissive: 0xc0302a, emissiveIntensity: 0.75 });
+  const headGeo = new THREE.BoxGeometry(0.46, 0.07, 0.06);
   for (const sx of [-1, 1]) {
-    const head = new THREE.Mesh(lightGeo, headMat);
-    head.position.set(sx * 0.62, 0.7, 2.27);
-    const tail = new THREE.Mesh(lightGeo, tailMat);
-    tail.position.set(sx * 0.66, 0.78, -2.27);
-    car.add(head, tail);
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.set(sx * 0.56, 0.7, 2.3);
+    car.add(head);
   }
+  const tailBar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.05), tailMat);
+  tailBar.position.set(0, 0.74, -2.31);
+  car.add(tailBar);
+
+  // Old panjara ostidagi qora havo olish qismi — burunni "yassi" ko'rinishdan chiqaradi
+  const intakeMat = new THREE.MeshStandardMaterial({ color: 0x0d1015, roughness: 0.7, metalness: 0.2 });
+  const intake = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.16, 0.06), intakeMat);
+  intake.position.set(0, 0.42, 2.33);
+  car.add(intake);
 
   car.position.y = 0;
   return car;

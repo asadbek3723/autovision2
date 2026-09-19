@@ -31,7 +31,13 @@ export const env = {
 
   paymentsMode,
 
-  aiProvider: optional('AI_PROVIDER', 'mock') as 'mock' | 'gemini' | 'openai',
+  aiProvider: optional('AI_PROVIDER', 'mock') as 'mock' | 'fal' | 'gemini' | 'openai',
+  /** fal.ai kaliti — "<id>:<secret>" ko'rinishida */
+  falKey: optional('FAL_KEY'),
+  /** fal.ai model yo'li, masalan fal-ai/nano-banana/edit */
+  falModel: optional('FAL_IMAGE_MODEL', 'fal-ai/nano-banana/edit').replace(/^\/+|\/+$/g, ''),
+  /** Faqat nano-banana-pro / nano-banana-2 uchun: 1K | 2K | 4K */
+  falResolution: optional('FAL_IMAGE_RESOLUTION', '2K'),
   geminiApiKey: optional('GEMINI_API_KEY'),
   /** Google'ning o'zi yoki Gemini-mos gateway (masalan https://api2.laozhang.ai) */
   geminiBaseUrl: (optional('GEMINI_BASE_URL') || 'https://generativelanguage.googleapis.com').replace(/\/+$/, ''),
@@ -76,6 +82,16 @@ export function configProblems(): ConfigProblem[] {
     });
   }
 
+  if (env.aiProvider === 'mock' && !env.isDev) {
+    out.push({
+      level: 'warning',
+      code: 'ai_provider_mock',
+      message: 'AI_PROVIDER sozlanmagan (mock) — rasm tahrirlanmaydi. AI_PROVIDER=fal va FAL_KEY qo‘ying.',
+    });
+  }
+  if (env.aiProvider === 'fal' && !env.falKey) {
+    out.push({ level: 'warning', code: 'missing_fal_key', message: 'AI_PROVIDER=fal, lekin FAL_KEY yo‘q' });
+  }
   if (env.aiProvider === 'gemini' && !env.geminiApiKey) {
     out.push({ level: 'warning', code: 'missing_gemini_key', message: 'AI_PROVIDER=gemini, lekin GEMINI_API_KEY yo‘q' });
   }

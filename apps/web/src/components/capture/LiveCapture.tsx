@@ -62,71 +62,59 @@ function arrowClass(icon: Guidance['icon']): string {
   }
 }
 
-function GuidanceBanner({ guidance, label }: { guidance: Guidance; label: string }) {
+/**
+ * Bitta katta ko'rsatma. Muammo bo'lsa — aynan nima qilish kerakligi; hammasi joyida
+ * bo'lsa — qaysi rakurs olinayotgani. Bir vaqtda faqat bittasi ko'rinadi.
+ */
+function GuidanceBanner({ guidance, headline }: { guidance: Guidance; headline: string }) {
   const ok = guidance.tone === 'ok';
   return (
     <div
       key={guidance.key}
-      className="cv-swap flex min-w-0 items-center gap-2.5 rounded-xl bg-black/45 px-3 py-1.5 backdrop-blur-xs border border-white/10"
+      className={cn(
+        'cv-swap flex min-w-0 items-center gap-3 rounded-2xl px-4 py-2.5 backdrop-blur-md border',
+        ok ? 'border-success/40 bg-success/15' : 'border-white/15 bg-black/65'
+      )}
       role="status"
       aria-live="polite"
     >
       <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white"
-        style={{ background: ok ? GUIDE_COLORS.ok : 'rgba(255,255,255,0.14)' }}
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white"
+        style={{ background: ok ? GUIDE_COLORS.ok : 'rgba(255,255,255,0.16)' }}
       >
-        <span className={cn('flex', arrowClass(guidance.icon))} style={{ transform: guidance.dir === 'back' ? 'scaleX(-1)' : undefined }}>
-          <CIcon name={ICON_FOR[guidance.icon]} size={18} strokeWidth={2.2} />
+        <span
+          className={cn('flex', arrowClass(guidance.icon))}
+          style={{ transform: guidance.dir === 'back' ? 'scaleX(-1)' : undefined }}
+        >
+          <CIcon name={ICON_FOR[guidance.icon]} size={22} strokeWidth={2.2} />
         </span>
       </span>
-      <div className="min-w-0">
-        <p className="truncate text-[11px] leading-4 text-white/60" style={SHADOW}>
-          Endi: {label}
-        </p>
-        <p
-          className="text-[17px] leading-5 font-semibold tracking-[-0.01em] text-white"
-          style={{ ...SHADOW, color: ok ? '#6ff0b4' : '#ffffff' }}
-        >
-          {guidance.text}
-        </p>
-      </div>
+      <p
+        className="min-w-0 text-[20px] leading-6 font-semibold tracking-[-0.01em] text-white"
+        style={SHADOW}
+      >
+        {headline}
+      </p>
     </div>
   );
 }
 
-/* --------------------------------------------------------------- nuqtalar */
-
-const PIP_LABELS: Record<CriterionId, string> = {
-  car: 'Mashina',
-  angle: 'Burchak',
-  distance: 'Masofa',
-  height: 'Balandlik',
-  steady: 'Barqaror',
-};
-
-function CriteriaPips({
-  passes,
-  soft,
-}: {
-  passes: Record<CriterionId, boolean>;
-  soft: Record<CriterionId, boolean>;
-}) {
+/** 8 rakursning progressi — "Old tomon" matnini takrorlamasdan */
+function StepProgress({ doneAngles, activeAngle }: { doneAngles: Set<string>; activeAngle: string }) {
   return (
-    <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 backdrop-blur-xs border border-white/10" aria-hidden="true">
-      {(Object.keys(PIP_LABELS) as CriterionId[]).map((id) => {
-        const pass = passes[id];
-        const isSoft = soft[id] && pass;
+    <div className="flex items-center gap-1" aria-hidden="true">
+      {REQUIRED_ANGLES.map((a) => {
+        const done = doneAngles.has(a.id);
+        const active = a.id === activeAngle;
         return (
-          <span key={id} className="flex items-center gap-1 text-[11px] leading-3 text-white/75">
-            <span
-              className="flex h-2 w-2 items-center justify-center rounded-full transition-colors duration-150 shrink-0"
-              style={{
-                background: isSoft ? 'transparent' : pass ? GUIDE_COLORS.ok : GUIDE_COLORS.bad,
-                border: isSoft ? '1px solid rgba(255,255,255,0.45)' : 'none',
-              }}
-            />
-            {PIP_LABELS[id]}
-          </span>
+          <span
+            key={a.id}
+            className="h-1.5 rounded-full transition-all duration-200"
+            style={{
+              width: active ? 26 : 16,
+              background: done ? GUIDE_COLORS.ok : active ? '#ffffff' : 'rgba(255,255,255,0.3)',
+            }}
+          />
         );
       })}
     </div>
@@ -292,6 +280,15 @@ export function LiveCapture({
   ).length;
   const stepText = snap.angleIndex < REQUIRED_CAR_PHOTOS ? `${snap.angleIndex + 1}/${REQUIRED_CAR_PHOTOS}` : 'qo‘shimcha';
   const fallbackMode = demo || !detectorReady || snap.sensor !== 'active';
+
+  /*
+   * Bitta ko'rsatma qoidasi: muammo bo'lsa aynan shu muammo, bo'lmasa qaysi rakurs.
+   * Shutter faqat hamma shart bajarilganda (yoki qo'lda rejimda) bosiladi.
+   */
+  const ready = snap.guidance.tone === 'ok';
+  const canShoot = ready || fallbackMode || snap.manualOffer;
+  const headline = ready ? `${snap.angle.label} (${stepText})` : snap.guidance.text;
+  const doneAngles = new Set(shots.filter((s) => s.status !== 'failed').map((s) => s.angle));
   const safeL = 'max(16px, env(safe-area-inset-left))';
   const safeR = 'max(16px, env(safe-area-inset-right))';
   const safeT = 'max(12px, env(safe-area-inset-top))';
@@ -304,7 +301,7 @@ export function LiveCapture({
       {/* Ramka atrofini qoraytirish */}
       <div
         className="pointer-events-none absolute rounded-xl"
-        style={{ ...rect, boxShadow: '0 0 0 9999px rgba(0,0,0,0.32)' }}
+        style={{ ...rect, boxShadow: '0 0 0 9999px rgba(0,0,0,0.58)' }}
       />
 
       {/* Aniqlangan mashina qutisi — ilova mashinani "ko'rayotgani" */}
@@ -333,12 +330,13 @@ export function LiveCapture({
         )}
       </div>
 
-      {/* --------------------------------------------- yuqori chap: Ko'rsatma banner */}
+      {/* ------------------------------------ yuqori markaz: yagona ko'rsatma + progress */}
       <div
-        className="pointer-events-none absolute z-20 flex flex-col items-start gap-2"
-        style={{ left: safeL, top: safeT, maxWidth: 'calc(100vw - 220px)' }}
+        className="pointer-events-none absolute z-20 flex flex-col items-center gap-2"
+        style={{ left: '50%', top: safeT, transform: 'translateX(-50%)', maxWidth: 'min(520px, calc(100vw - 340px))' }}
       >
-        <GuidanceBanner guidance={snap.guidance} label={snap.angle.label} />
+        <GuidanceBanner guidance={snap.guidance} headline={headline} />
+        <StepProgress doneAngles={doneAngles} activeAngle={snap.angle.id} />
 
         {snap.manualOffer && (
           <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-xl bg-black/75 p-2 text-[12px] text-white backdrop-blur-md border border-white/15">
@@ -379,16 +377,23 @@ export function LiveCapture({
         >
           <CIcon name={muted ? 'volume-off' : 'volume'} size={18} />
         </button>
+        {/* O'tkazish natijani yomonlashtiradi — shuning uchun ikkinchi darajali, mayda */}
         <button
           type="button"
           onClick={actions.skip}
-          className="flex h-9 items-center rounded-lg bg-black/45 px-3 text-[13px] font-medium text-white/90 backdrop-blur-xs border border-white/10 active:bg-black/75"
+          className="flex h-9 items-center px-2 text-[12px] text-white/55 underline-offset-2 hover:underline active:text-white/80"
         >
           O‘tkazish
         </button>
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => {
+            // Olingan kadrlar yo'qolmasligi uchun tasdiq so'raymiz
+            if (shots.length > 0 && !window.confirm('Suratga olishni to‘xtatasizmi? Olingan kadrlar saqlanadi.')) {
+              return;
+            }
+            onClose();
+          }}
           aria-label="Yopish"
           className="flex h-9 w-9 items-center justify-center rounded-lg bg-black/45 text-white backdrop-blur-xs border border-white/10 active:bg-black/75"
         >
@@ -408,13 +413,11 @@ export function LiveCapture({
       {/* ----------------------------------------------- chap past: 3D model (Ixcham) */}
       <div
         className="pointer-events-none absolute z-20 transition-opacity duration-200"
-        style={{ left: safeL, bottom: `calc(${safeB} + 56px)`, width: 'clamp(96px, 14vw, 124px)', opacity: 0.8 }}
+        style={{ left: safeL, bottom: `calc(${safeB} + 56px)`, width: 'clamp(124px, 18vw, 168px)' }}
       >
+        {/* Rakurs nomi tepadagi ko'rsatmada — bu yerda takrorlanmaydi */}
         <div className="rounded-xl border border-white/15 bg-black/40 p-1 backdrop-blur-xs">
           <CarGuide stateRef={guideRef} guide={guide} style={{ aspectRatio: '3 / 2', width: '100%' }} />
-          <p className="mt-1 text-center text-[11px] font-semibold text-white/90 truncate" style={SHADOW}>
-            {snap.angle.label} <span className="text-[10px] font-normal text-white/60 tabular-nums">{stepText}</span>
-          </p>
         </div>
       </div>
 
@@ -423,34 +426,29 @@ export function LiveCapture({
         className="absolute z-30 flex items-center justify-center"
         style={{ right: safeR, top: '50%', transform: 'translateY(-50%)' }}
       >
+        {/* Shartlar bajarilmaguncha tugma xira va bosilmaydi — "bosdim, nega ishlamadi" holati bo'lmaydi */}
         <button
           type="button"
           onClick={actions.takeShotManual}
-          aria-label="Qo‘lda suratga olish"
+          disabled={!canShoot}
+          aria-label={canShoot ? 'Suratga olish' : 'Shartlar bajarilmagan'}
           className={cn(
-            'group relative flex items-center justify-center rounded-full border-4 transition-all duration-150 active:scale-95 shadow-2xl',
-            fallbackMode || snap.manualOffer
-              ? 'h-[68px] w-[68px] border-white bg-white/20 backdrop-blur-sm'
-              : 'h-[60px] w-[60px] border-white/60 bg-black/30 backdrop-blur-xs'
+            'group relative flex h-[68px] w-[68px] items-center justify-center rounded-full border-4 shadow-2xl',
+            'transition-all duration-150 enabled:active:scale-95',
+            canShoot
+              ? 'border-white bg-white/20 backdrop-blur-sm'
+              : 'cursor-not-allowed border-white/30 bg-black/30 opacity-45 backdrop-blur-xs'
           )}
         >
           <span
             className="rounded-full transition-all duration-150"
             style={{
-              width: fallbackMode || snap.manualOffer ? 48 : 42,
-              height: fallbackMode || snap.manualOffer ? 48 : 42,
-              backgroundColor: snap.phase === 'locked' ? GUIDE_COLORS.ok : '#ffffff',
+              width: canShoot ? 48 : 40,
+              height: canShoot ? 48 : 40,
+              backgroundColor: ready ? GUIDE_COLORS.ok : '#ffffff',
             }}
           />
         </button>
-      </div>
-
-      {/* ------------------------------------------------- mezon nuqtalari (Markaz pastda ixcham) */}
-      <div
-        className="pointer-events-none absolute inset-x-0 z-20 flex justify-center"
-        style={{ bottom: `calc(${safeB} + 52px)` }}
-      >
-        <CriteriaPips passes={snap.passes} soft={snap.soft} />
       </div>
 
       {/* --------------------------------------------------------- pastki panel (Miniaturalar & Sanoq) */}

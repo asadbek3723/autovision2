@@ -1,17 +1,23 @@
-export interface ReferenceImage {
-  image: Buffer;
-  mimeType: string;
+/** Provayderga beriladigan bitta rasm — har doim ochiq (public) URL bilan */
+export interface SourceImage {
+  /**
+   * Ochiq URL (Supabase Storage). URL bilan ishlash muhim: fal.ai kabi provayderlar
+   * rasmni o'zi yuklab oladi, ya'ni biz uni serverga tortib, base64 qilib
+   * qayta yubormaymiz — bu Vercel'ning 60 soniyalik limitida katta tejamkorlik.
+   */
+  url: string;
   /** Promptdagi "IMAGE n" bilan mos keluvchi qisqa izoh */
   label: string;
 }
 
 export interface EditImageInput {
   /** Tahrirlanadigan asl rasm (mijozning mashinasi) — promptda "IMAGE 1" */
-  image: Buffer;
-  mimeType: string;
-  prompt: string;
+  image: SourceImage;
   /** Katalog mahsulotlarining rasmlari — promptda "IMAGE 2..n" */
-  references?: ReferenceImage[];
+  references: SourceImage[];
+  prompt: string;
+  /** Natija nisbati, masalan "16:9" — asl kadr qirqilmasligi uchun */
+  aspectRatio?: string;
 }
 
 export interface EditImageResult {

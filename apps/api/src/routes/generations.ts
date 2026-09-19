@@ -2,7 +2,6 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
   buildEditPrompt,
-  buildPrompt,
   categoriesFromOptions,
   findGroup,
   isProductOption,
@@ -10,8 +9,9 @@ import {
 } from '@carvision/shared';
 import { authenticate } from '../lib/auth.js';
 import { db, uploadImage } from '../lib/supabase.js';
+import { probeAspectRatio } from '../lib/imageFetch.js';
 import { badRequest, HttpError, notFound } from '../lib/errors.js';
-import { AiError, getProvider, type ReferenceImage } from '../ai/index.js';
+import { AiError, getProvider, type SourceImage } from '../ai/index.js';
 
 const DAILY_GENERATION_LIMIT = 20;
 
@@ -23,13 +23,6 @@ const createSchema = z.object({
   options: z.record(z.string(), z.string()).default({}),
   free_text: z.string().max(400).optional(),
 });
-
-async function fetchImage(url: string): Promise<{ buffer: Buffer; mimeType: string }> {
-  const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-  if (!response.ok) throw new Error(`Rasmni oqib bolmadi (${response.status}): ${url.slice(0, 80)}`);
-  const mimeType = (response.headers.get('content-type') ?? 'image/jpeg').split(';')[0]!.trim();
-  return { buffer: Buffer.from(await response.arrayBuffer()), mimeType };
-}
 
 /** Provayder xatosini foydalanuvchiga tushunarli javobga aylantiradi */
 function toHttpError(err: unknown): HttpError {
@@ -116,7 +109,8 @@ export async function generationRoutes(app: FastifyInstance) {
     if (!sourceImage) throw badRequest('Avval avtomobilni rasmga oling');
 
     /* ------------------------------------------- tanlovlarni tahlil qilish */
-    const productIds = Object.values(options).filter(isProductOption);
+    // Takrorlanmas ro'yxat: bir mahsulot ikki marta tanlansa ham AI'ga bir marta beriladi
+    const productIds = [...new Set(Object.values(options).filter(isProductOption))];
     const products: (PromptProduct & { image_url: string })[] = [];
     if (productIds.length > 0) {
       const { data: rows, error } = await db
@@ -158,7 +152,8 @@ export async function generationRoutes(app: FastifyInstance) {
         user_id: user.id,
         car_id,
         original_image: sourceImage,
-        prompt: buildPrompt(options, free_text),
+        // AI'ga aynan shu matn yuboriladi — nosoz natijani tekshirish uchun saqlanadi
+        prompt,
         categories,
         options,
         status: 'processing',
@@ -169,26 +164,24 @@ export async function generationRoutes(app: FastifyInstance) {
 
     try {
       const provider = getProvider();
-      const original = await fetchImage(sourceImage);
-      const references: ReferenceImage[] = await Promise.all(
-        products.map(async (product) => {
-          const ref = await fetchImage(product.image_url);
-          return { image: ref.buffer, mimeType: ref.mimeType, label: `catalogue product: ${product.name}` };
-        })
-      );
+
+      // Asl kadr nisbati: berilmasa model natijani kvadrat qilib, mashinani qirqadi.
+      // Faqat sarlavha o'qiladi (Range so'rovi), butun fayl yuklanmaydi.
+      const aspectRatio = (await probeAspectRatio(sourceImage)) ?? undefined;
+
+      const references: SourceImage[] = products.map((product) => ({
+        url: product.image_url,
+        label: `catalogue product: ${product.name}`,
+      }));
 
       const result = await provider.editImage({
-        image: original.buffer,
-        mimeType: original.mimeType,
-        prompt,
+        image: { url: sourceImage, label: 'customer car photo' },
         references,
+        prompt,
+        aspectRatio,
       });
 
-      // mock provayder rasmni o'zgartirmaydi — yuklab o'tirmasdan asl rasm qaytariladi
-      const generatedUrl =
-        provider.name === 'mock'
-          ? sourceImage
-          : await uploadImage(result.image, result.mimeType, `generations/${user.id}`);
+      const generatedUrl = await uploadImage(result.image, result.mimeType, `generations/${user.id}`);
 
       const { data: done } = await db
         .from('generations')

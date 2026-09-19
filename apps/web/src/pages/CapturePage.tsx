@@ -5,6 +5,7 @@ import { api, ApiRequestError } from '../lib/api';
 import { cn } from '../lib/format';
 import { useStudio } from '../store/useStudio';
 import { useIsDesktop } from '../lib/useIsDesktop';
+import { resizeImage } from '../lib/imageResize';
 import { AngleCompass } from '../components/AngleCompass';
 import { LiveCapture } from '../components/capture/LiveCapture';
 import { Button } from '../components/ui/Button';
@@ -38,7 +39,7 @@ const DEFAULT_SLOTS: GalleryPhotoSlot[] = [
 export function CapturePage() {
   const { id: routeCarId } = useParams();
   const navigate = useNavigate();
-  const { setCar } = useStudio();
+  const { setCar, reset } = useStudio();
 
   const streamRef = useRef<MediaStream | null>(null);
   const [carId, setCarId] = useState(routeCarId ?? '');
@@ -64,15 +65,41 @@ export function CapturePage() {
 
     api
       .createCar({ vehicle_model_id: null, year: null, color: null })
-      .then(({ car }) => setCarId(car.id))
+      .then(({ car }) => {
+        creatingCar.current = false;
+        setCarId(car.id);
+      })
       .catch((err) => {
         creatingCar.current = false;
         setCarError(err instanceof ApiRequestError ? err.message : 'Avtomobil yozuvi yaratilmadi');
       });
   }, []);
 
+  /*
+   * Manzildagi car_id boshqa (eski) sessiyaniki bo'lishi mumkin — u holda rasm yuklashda
+   * server 404 "Avtomobil topilmadi" qaytaradi. Shuning uchun avval tegishliligini
+   * tekshiramiz va mos kelmasa yangi yozuv ochamiz.
+   */
   useEffect(() => {
-    if (!carId) createCarRecord();
+    let cancelled = false;
+    if (!routeCarId) {
+      createCarRecord();
+      return;
+    }
+    api
+      .car(routeCarId)
+      .then(() => {
+        if (!cancelled) setCarError(null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCarId('');
+        reset();
+        createCarRecord();
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -191,13 +218,15 @@ export function CapturePage() {
         return;
       }
 
+      // Telefon galereyasidagi kadr 5–12 MB bo'lishi mumkin: kichraytirilmasa yuklash
+      // sekin kechadi va Vercel so'rov hajmi limitiga (~4.5 MB) urilib qolishi mumkin.
       for (const slot of gallerySlots) {
         if (slot.file) {
-          await api.uploadCarPhoto(carId, slot.file, slot.angle);
+          await api.uploadCarPhoto(carId, await resizeImage(slot.file), slot.angle);
         } else if (slot.previewUrl && slot.previewUrl.startsWith('/images/')) {
           const resp = await fetch(slot.previewUrl);
           const blob = await resp.blob();
-          await api.uploadCarPhoto(carId, blob, slot.angle);
+          await api.uploadCarPhoto(carId, await resizeImage(blob), slot.angle);
         }
       }
 

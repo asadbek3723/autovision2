@@ -8,6 +8,12 @@ import type { Car, Generation } from '@carvision/shared';
  * marketplace'ga o'tish uzluksiz bo'lishi kerak).
  */
 interface StudioState {
+  /**
+   * Saqlangan mashina qaysi foydalanuvchiga tegishli. Mehmon sessiyasi yangilansa
+   * (token eskirsa) foydalanuvchi o'zgaradi va eski car_id boshqa odamniki bo'lib
+   * qoladi — server u uchun 404 "Avtomobil topilmadi" qaytaradi.
+   */
+  ownerId: string | null;
   car: Car | null;
   /** Konfiguratsiya qaysi kadr ustida ishlashi */
   photoUrl: string | null;
@@ -22,6 +28,8 @@ interface StudioState {
    */
   results: Record<string, Generation>;
 
+  /** Sessiya egasi o'zgargan bo'lsa saqlangan mashina va natijalarni tozalaydi */
+  ensureOwner: (userId: string | null) => void;
   setCar: (car: Car | null) => void;
   setPhotoUrl: (url: string | null) => void;
   setVehicleModel: (id: string | null) => void;
@@ -35,6 +43,7 @@ interface StudioState {
 export const useStudio = create<StudioState>()(
   persist(
     (set) => ({
+      ownerId: null,
       car: null,
       photoUrl: null,
       vehicleModelId: null,
@@ -42,6 +51,21 @@ export const useStudio = create<StudioState>()(
       freeText: '',
       generation: null,
       results: {},
+
+      ensureOwner: (userId) =>
+        set((state) => {
+          if (!userId || state.ownerId === userId) return { ownerId: userId ?? state.ownerId };
+          // Boshqa foydalanuvchi: eski mashina/natijalar bu sessiyada ishlamaydi
+          return {
+            ownerId: userId,
+            car: null,
+            photoUrl: null,
+            options: {},
+            freeText: '',
+            generation: null,
+            results: {},
+          };
+        }),
 
       setCar: (car) => set({ car, photoUrl: car?.image_url ?? null, generation: null, results: {} }),
       setPhotoUrl: (photoUrl) => set({ photoUrl }),
@@ -88,6 +112,7 @@ export const useStudio = create<StudioState>()(
         results: {},
       }) as unknown as StudioState,
       partialize: (state) => ({
+        ownerId: state.ownerId,
         car: state.car,
         photoUrl: state.photoUrl,
         vehicleModelId: state.vehicleModelId,

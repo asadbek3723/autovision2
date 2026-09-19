@@ -1,4 +1,5 @@
 import { env } from '../env.js';
+import { fetchImage } from '../lib/imageFetch.js';
 import { AiError, type ImageEditProvider } from './types.js';
 
 interface OpenAIImageResponse {
@@ -9,8 +10,14 @@ interface OpenAIImageResponse {
 /** OpenAI Images edit endpoint (gpt-image-1) — bir nechta rasm (image[]) bilan */
 export const openaiProvider: ImageEditProvider = {
   name: 'openai',
-  async editImage({ image, mimeType, prompt, references = [] }) {
+  async editImage({ image, references, prompt }) {
     if (!env.openaiApiKey) throw new AiError('config', 'OPENAI_API_KEY sozlanmagan');
+
+    // OpenAI multipart fayl kutadi, shuning uchun rasmlarni o'zimiz yuklab olamiz
+    const [original, refs] = await Promise.all([
+      fetchImage(image.url),
+      Promise.all(references.map((ref) => fetchImage(ref.url))),
+    ]);
 
     const form = new FormData();
     form.append('model', env.openaiModel);
@@ -18,16 +25,16 @@ export const openaiProvider: ImageEditProvider = {
     form.append('n', '1');
     form.append('size', 'auto');
     form.append('input_fidelity', 'high');
-    form.append('image[]', new Blob([new Uint8Array(image)], { type: mimeType }), 'car.png');
-    references.forEach((ref, index) => {
-      form.append('image[]', new Blob([new Uint8Array(ref.image)], { type: ref.mimeType }), `ref${index + 2}.png`);
+    form.append('image[]', new Blob([new Uint8Array(original.buffer)], { type: original.mimeType }), 'car.png');
+    refs.forEach((ref, index) => {
+      form.append('image[]', new Blob([new Uint8Array(ref.buffer)], { type: ref.mimeType }), `ref${index + 2}.png`);
     });
 
     let response: Response;
     try {
       response = await fetch('https://api.openai.com/v1/images/edits', {
         method: 'POST',
-        signal: AbortSignal.timeout(48_000),
+        signal: AbortSignal.timeout(36_000),
         headers: { Authorization: `Bearer ${env.openaiApiKey}` },
         body: form,
       });

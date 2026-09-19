@@ -294,6 +294,21 @@ export function StudioPage() {
         }}
       >
         <div className="px-4 pb-3 lg:px-6 lg:py-5">
+          {/* Katalog yuklanmasa dok faqat "Rang" bilan qolib ketadi — buni jim o'tkazmaymiz */}
+          {catalog.isError && (
+            <div className="mb-3 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-[13px] text-warning">
+              <Icon name="alert" size={14} className="mt-0.5 shrink-0" />
+              <span className="flex-1">Katalog yuklanmadi — hozircha faqat rang tanlash mumkin.</span>
+              <button
+                type="button"
+                onClick={() => void catalog.refetch()}
+                className="shrink-0 font-medium underline"
+              >
+                Qayta urinish
+              </button>
+            </div>
+          )}
+
           {noteOpen ? (
             <Textarea
               value={freeText}
