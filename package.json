@@ -1,0 +1,30 @@
+{
+  "name": "carvision",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CarVision — AI Car Customization + Tuning Parts Marketplace",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:api dev:web",
+    "dev:api": "npm run dev -w @carvision/api",
+    "dev:web": "npm run dev -w @carvision/web",
+    "build": "npm run build -w @carvision/shared && npm run build -w @carvision/api && npm run build -w @carvision/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:push": "node scripts/db-push.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "postinstall": "npm run build -w @carvision/shared",
+    "predev": "npm run build -w @carvision/shared",
+    "pretypecheck": "npm run build -w @carvision/shared"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5",
+    "pg": "^8.23.0",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

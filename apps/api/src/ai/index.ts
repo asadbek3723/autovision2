@@ -1,0 +1,17 @@
+import { env } from '../env.js';
+import { mockProvider } from './mock.js';
+import { geminiProvider } from './gemini.js';
+import { openaiProvider } from './openai.js';
+import type { ImageEditProvider } from './types.js';
+
+export type { ImageEditProvider, EditImageInput, EditImageResult } from './types.js';
+
+const providers: Record<string, ImageEditProvider> = {
+  mock: mockProvider,
+  gemini: geminiProvider,
+  openai: openaiProvider,
+};
+
+export function getProvider(): ImageEditProvider {
+  return providers[env.aiProvider] ?? mockProvider;
+}
