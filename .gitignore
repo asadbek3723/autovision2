@@ -17,3 +17,6 @@ Thumbs.db
 *.log
 .vite/
 coverage/
+
+# Deploy uchun lokal eslatma (kalit qo'yiladigan bo'lishi mumkin)
+env-for-deploy.txt

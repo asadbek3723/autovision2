@@ -1,4 +1,5 @@
 import { env } from '../env.js';
+import { nearestAspectRatio } from '../lib/imageSniff.js';
 import { AiError, type ImageEditProvider } from './types.js';
 
 interface GeminiPart {
@@ -29,16 +30,29 @@ export const geminiProvider: ImageEditProvider = {
     });
     parts.push({ text: prompt });
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${env.geminiModel}:generateContent`;
+    const url = `${env.geminiBaseUrl}/v1beta/models/${env.geminiModel}:generateContent`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': env.geminiApiKey,
+    };
+    // Gateway'lar (laozhang va h.k.) Bearer kutadi; Google'ga esa Bearer yuborilmaydi (OAuth deb o'ylaydi)
+    if (!env.geminiBaseUrl.includes('googleapis.com')) headers.Authorization = `Bearer ${env.geminiApiKey}`;
+
+    // Asl rasm nisbatini so'raymiz — aks holda model kvadrat qaytarib, kadrni qirqadi
+    const aspectRatio = nearestAspectRatio(image);
+
     let response: Response;
     try {
       response = await fetch(url, {
         method: 'POST',
         signal: AbortSignal.timeout(48_000),
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.geminiApiKey },
+        headers,
         body: JSON.stringify({
           contents: [{ role: 'user', parts }],
-          generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+          generationConfig: {
+            responseModalities: ['IMAGE', 'TEXT'],
+            ...(aspectRatio ? { imageConfig: { aspectRatio } } : {}),
+          },
         }),
       });
     } catch (err) {
@@ -49,7 +63,13 @@ export const geminiProvider: ImageEditProvider = {
     const body = (await response.json().catch(() => ({}))) as GeminiResponse;
     if (!response.ok) {
       const detail = body.error?.message ?? 'nomalum';
-      if (response.status === 429 || body.error?.status === 'RESOURCE_EXHAUSTED') {
+      const errCode = (body.error as { code?: string | number } | undefined)?.code;
+      if (
+        response.status === 429 ||
+        body.error?.status === 'RESOURCE_EXHAUSTED' ||
+        errCode === 'insufficient_user_quota' ||
+        /quota|balance/i.test(detail)
+      ) {
         throw new AiError('quota', `Gemini kvotasi tugagan yoki to‘lov yoqilmagan (429): ${detail.slice(0, 200)}`);
       }
       throw new AiError('other', `Gemini xatosi (${response.status}): ${detail.slice(0, 300)}`);

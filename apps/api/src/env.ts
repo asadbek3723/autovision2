@@ -33,7 +33,9 @@ export const env = {
 
   aiProvider: optional('AI_PROVIDER', 'mock') as 'mock' | 'gemini' | 'openai',
   geminiApiKey: optional('GEMINI_API_KEY'),
-  geminiModel: optional('GEMINI_IMAGE_MODEL', 'gemini-3-pro-image-preview'),
+  /** Google'ning o'zi yoki Gemini-mos gateway (masalan https://api2.laozhang.ai) */
+  geminiBaseUrl: optional('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com').replace(/\/+$/, ''),
+  geminiModel: optional('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash-image'),
   openaiApiKey: optional('OPENAI_API_KEY'),
   openaiModel: optional('OPENAI_IMAGE_MODEL', 'gpt-image-1'),
 };
