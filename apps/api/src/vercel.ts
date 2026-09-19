@@ -1,17 +1,19 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { FastifyInstance } from 'fastify';
-import { buildServer } from '../src/server.js';
+import { buildServer } from './server.js';
 
 /**
- * Vercel serverless entry — barcha /api/* so'rovlar shu funksiyaga tushadi
- * (Vercel'ning fayl-tizim marshrutlashi: `api/[...slug].ts` = `/api/*`).
+ * Vercel serverless handler. `scripts/bundle.mjs` bu faylni barcha
+ * bog'liqliklar (fastify, supabase-js, @carvision/shared ...) bilan BITTA
+ * fayl qilib yig'adi (`api/_app.mjs`); `api/index.js` uni qayta eksport qiladi.
+ * Shu tufayli Vercel'da TypeScript kompilyatsiyasi, workspace paketlarini
+ * topish va ESM kengaytmalari bilan bog'liq muammolar bo'lmaydi.
  *
- * Fastify instansi lambda o'zagi issiq (warm) turgan davrda qayta ishlatiladi:
- * har so'rovda qaytadan qurilmaydi, faqat birinchi so'rovda tayyorlanadi.
+ * Fastify instansi lambda "issiq" turgan davrda qayta ishlatiladi.
  */
 let appPromise: Promise<FastifyInstance> | null = null;
 
-async function getApp(): Promise<FastifyInstance> {
+function getApp(): Promise<FastifyInstance> {
   if (!appPromise) {
     appPromise = buildServer()
       .then(async (app) => {
@@ -31,14 +33,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   try {
     const app = await getApp();
     app.server.emit('request', req, res);
-  } catch (err: any) {
+  } catch (err) {
+    console.error('Server ishga tushmadi:', err);
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
     res.end(
       JSON.stringify({
         error: 'server_initialization_failed',
-        message: err?.message || 'Serverni ishga tushirishda xatolik yuz berdi.',
-        hint: 'Vercel Dashboard -> Settings -> Environment Variables bo\'limida SUPABASE_URL va SUPABASE_SERVICE_ROLE_KEY sozlamalari kiritilganini tekshiring.'
+        message: 'Serverni ishga tushirishda xatolik yuz berdi. Vercel > Logs ni tekshiring.',
       })
     );
   }
