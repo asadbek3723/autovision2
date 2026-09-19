@@ -34,7 +34,7 @@ function OptionCard({
       aria-pressed={selected}
       aria-label={`${groupLabel}: ${label}`}
       className={cn(
-        'relative w-[88px] shrink-0 snap-start rounded-lg border p-2 text-left transition-colors',
+        'relative w-[88px] shrink-0 snap-start rounded-lg border p-2 text-left transition-colors lg:w-auto lg:p-2.5',
         'outline-none focus-visible:ring-2 focus-visible:ring-accent-soft',
         selected
           ? 'border-accent bg-accent/10'
@@ -53,7 +53,7 @@ function OptionCard({
 
       <span
         className={cn(
-          'block text-[11px] leading-tight',
+          'block text-[11px] leading-tight lg:text-[13px]',
           selected ? 'text-text' : 'text-text-muted'
         )}
       >
@@ -91,10 +91,15 @@ export function ConfiguratorDock({
   const activeValue = options[activeGroup.key];
 
   return (
-    <div className="shrink-0 border-t border-border bg-surface">
+    <div className="shrink-0 border-t border-border bg-surface lg:flex lg:h-full lg:w-[440px] lg:flex-col lg:border-t-0 lg:border-l xl:w-[480px]">
+      {/* Faqat desktop: panel sarlavhasi */}
+      <p className="hidden px-6 pt-6 pb-1 text-[12px] font-semibold tracking-[0.18em] text-text-subtle uppercase lg:block">
+        Avtomobil qismlari
+      </p>
+
       {/* ------------------------------------- bo'limlar (yon tomonga surish) */}
       <div
-        className="-mb-px flex gap-1 overflow-x-auto border-b border-border px-4"
+        className="-mb-px flex gap-1 overflow-x-auto border-b border-border px-4 lg:mb-0 lg:shrink-0 lg:flex-wrap lg:gap-2 lg:overflow-visible lg:border-b-0 lg:px-6 lg:py-3"
         role="tablist"
         aria-label="Avtomobil qismlari"
       >
@@ -115,9 +120,10 @@ export function ConfiguratorDock({
               }}
               className={cn(
                 'relative flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm whitespace-nowrap transition-colors',
+                'lg:rounded-full lg:border lg:px-4 lg:py-2',
                 isActive
-                  ? 'border-accent text-text'
-                  : 'border-transparent text-text-muted hover:text-text'
+                  ? 'border-accent text-text lg:bg-accent/10'
+                  : 'border-transparent text-text-muted hover:text-text lg:border-border lg:hover:border-border-strong'
               )}
             >
               {group.label}
@@ -138,7 +144,7 @@ export function ConfiguratorDock({
       {/* --------------------------------- variantlar (yon tomonga surish) */}
       <div
         ref={optionsRef}
-        className="flex snap-x gap-2 overflow-x-auto px-4 py-3"
+        className="flex snap-x gap-2 overflow-x-auto px-4 py-3 lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:content-start lg:gap-3 lg:overflow-x-visible lg:overflow-y-auto lg:px-6 lg:py-4"
         role="tabpanel"
         aria-label={activeGroup.label}
       >
@@ -159,7 +165,7 @@ export function ConfiguratorDock({
         ))}
       </div>
 
-      {children}
+      {children && <div className="lg:shrink-0 lg:border-t lg:border-border">{children}</div>}
     </div>
   );
 }

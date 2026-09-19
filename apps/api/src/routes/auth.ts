@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { authenticate, toPublicUser } from '../lib/auth.js';
 import { db } from '../lib/supabase.js';
@@ -10,7 +11,13 @@ import {
   normalizePhoneUz,
   cleanLogin,
 } from '../lib/validation.js';
-import { checkLoginLimit, checkRegisterLimit, recordAttempt } from '../lib/rateLimit.js';
+import {
+  checkGuestLimit,
+  checkLoginLimit,
+  checkRegisterLimit,
+  recordAttempt,
+  GUEST_LOGIN_PREFIX,
+} from '../lib/rateLimit.js';
 import { badRequest, unauthorized, conflict, unprocessable } from '../lib/errors.js';
 
 export async function authRoutes(app: FastifyInstance) {
@@ -82,6 +89,38 @@ export async function authRoutes(app: FastifyInstance) {
       if (err.statusCode) throw err;
       throw new Error(`Roʻyxatdan oʻtishda xato: ${err?.message || err}`);
     }
+  });
+
+  /**
+   * Mehmon sessiyasi — login/parolsiz kirish (auth vaqtincha o'chirilganda).
+   * Parolsiz akkaunt (password_hash = null) /api/auth/login orqali kira olmaydi,
+   * faqat shu qurilmadagi token orqali ishlaydi.
+   */
+  app.post('/api/auth/guest', async (request, reply) => {
+    const ip = request.ip;
+    await checkGuestLimit(ip);
+
+    const login = `${GUEST_LOGIN_PREFIX}${randomBytes(6).toString('hex')}`;
+    const { data: user, error } = await db
+      .from('users')
+      .insert({ login, name: 'Mehmon', role: 'user' })
+      .select('*')
+      .single();
+
+    if (error || !user) {
+      throw new Error(`Mehmon akkaunti yaratilmadi: ${error?.message ?? 'nomaʼlum xato'}`);
+    }
+
+    await recordAttempt('register', login, ip, true);
+    const { token, expiresAt } = await createSession(user.id, request);
+
+    reply.status(201);
+    return {
+      token,
+      expires_at: expiresAt,
+      user: toPublicUser(user as any),
+      seller: null,
+    };
   });
 
   /** Kirish */

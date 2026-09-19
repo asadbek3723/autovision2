@@ -4,6 +4,7 @@ import { REQUIRED_CAR_PHOTOS } from '@carvision/shared';
 import { api, ApiRequestError } from '../lib/api';
 import { cn } from '../lib/format';
 import { useStudio } from '../store/useStudio';
+import { useIsDesktop } from '../lib/useIsDesktop';
 import { AngleCompass } from '../components/AngleCompass';
 import { LiveCapture } from '../components/capture/LiveCapture';
 import { Button } from '../components/ui/Button';
@@ -44,7 +45,14 @@ export function CapturePage() {
   const [carError, setCarError] = useState<string | null>(null);
   const creatingCar = useRef(false);
 
-  const [inputMethod, setInputMethod] = useState<InputMethod>('camera');
+  // Noutbukda kamera yo'q — desktopda faqat rasm yuklash (galereya) rejimi ishlaydi
+  const isDesktop = useIsDesktop();
+  const [inputMethod, setInputMethod] = useState<InputMethod>(isDesktop ? 'gallery' : 'camera');
+  const [dragOver, setDragOver] = useState(false);
+
+  useEffect(() => {
+    if (isDesktop) setInputMethod('gallery');
+  }, [isDesktop]);
   const [gallerySlots, setGallerySlots] = useState<GalleryPhotoSlot[]>(DEFAULT_SLOTS);
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -152,38 +160,23 @@ export function CapturePage() {
     });
   };
 
-  const handleUseDemoGentraPhotos = () => {
-    setGallerySlots([
-      {
-        angle: 'front',
-        label: '1. Oldidan (Front)',
-        hint: 'Kapot va kapot qismi',
-        file: null,
-        previewUrl: '/images/b49d788e-38c8-45ef-9ad1-5475a421647f-960x540.jpg',
-      },
-      {
-        angle: 'rear',
-        label: '2. Orqadan (Rear)',
-        hint: 'Bagaj va orqa bamper',
-        file: null,
-        previewUrl: '/images/2114fe8add8e385ca1a02ec997c7f9932024042515313092445wuE4hCDt7N_jpg.webp',
-      },
-      {
-        angle: 'front-left',
-        label: '3. Old-chap burchak',
-        hint: '45° chap tomondan rasm',
-        file: null,
-        previewUrl: '/images/6d357159cd6b8cc6b5df9c666dcfe6342024080713163091892DU5DAdS1pN_jpg.webp',
-      },
-      {
-        angle: 'front-right',
-        label: '4. Old-o‘ng burchak',
-        hint: '45° o‘ng tomondan rasm',
-        file: null,
-        previewUrl: '/images/aldirishotka.webp',
-      },
-    ]);
+  /** Bir nechta faylni (tanlash yoki drag&drop) bo'sh ramkalarga tartib bilan joylaydi */
+  const handleBulkFiles = (fileList: FileList | File[] | null) => {
+    const files = Array.from(fileList ?? []).filter((file) => file.type.startsWith('image/'));
+    if (files.length === 0) return;
+
+    setGallerySlots((prev) => {
+      const next = [...prev];
+      let cursor = 0;
+      for (const file of files) {
+        while (cursor < next.length && (next[cursor]!.file || next[cursor]!.previewUrl)) cursor += 1;
+        if (cursor >= next.length) break;
+        next[cursor] = { ...next[cursor]!, file, previewUrl: URL.createObjectURL(file) };
+      }
+      return next;
+    });
   };
+
 
   const handleFinishGallery = async () => {
     if (!carId) return;
@@ -239,46 +232,63 @@ export function CapturePage() {
   const selectedCount = gallerySlots.filter((s) => s.file || s.previewUrl).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg px-5 pt-6 pb-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex flex-col bg-bg px-5 pt-6 pb-6 overflow-y-auto lg:px-10 lg:pt-8 lg:pb-10">
+      {/* Faqat desktop: sahifadan chiqish */}
+      <button
+        type="button"
+        onClick={() => navigate('/')}
+        className="mx-auto mb-2 hidden w-full max-w-5xl items-center gap-2 self-start text-[14px] text-text-muted transition-colors hover:text-text lg:flex"
+      >
+        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface/60">
+          <Icon name="chevron-left" size={18} />
+        </span>
+        Studioga qaytish
+      </button>
+
       {camera === 'idle' && (
-        <div className="flex flex-1 flex-col max-w-lg mx-auto w-full">
+        <div className="flex flex-1 flex-col max-w-lg mx-auto w-full lg:max-w-5xl lg:justify-center">
           {/* Sarlavha */}
           <div className="cv-rise mb-4 text-center">
-            <h1 className="text-[24px] font-bold tracking-[-0.03em] text-text">
-              Mashinani rasmga olish
+            <h1 className="text-[24px] font-bold tracking-[-0.03em] text-text lg:text-[38px]">
+              {isDesktop ? 'Mashina rasmlarini yuklang' : 'Mashinani rasmga olish'}
             </h1>
-            <p className="mt-1 text-[14px] text-text-muted">
-              Kamera orqali 3D suratga oling yoki galereyadan 4 ta rasm yuklang
+            <p className="mt-1 text-[14px] text-text-muted lg:mt-2 lg:text-[16px]">
+              {isDesktop
+                ? 'Avtomobilingizning 4 tagacha rasmini tanlang — kamera faqat telefonda ishlaydi'
+                : 'Kamera orqali 3D suratga oling yoki galereyadan 4 ta rasm yuklang'}
             </p>
           </div>
 
           {/* Rejimni tanlash tugmalari (Tabs) */}
-          <div className="cv-rise mb-5 flex rounded-2xl border border-white/10 bg-surface/60 p-1 backdrop-blur-md">
+          <div className="cv-rise mb-5 flex rounded-2xl border border-white/10 bg-surface/60 p-1 backdrop-blur-md lg:mx-auto lg:mb-8 lg:w-full lg:max-w-xl">
             <button
               type="button"
+              disabled={isDesktop}
+              title={isDesktop ? 'Jonli kamera faqat telefonda ishlaydi' : undefined}
               onClick={() => setInputMethod('camera')}
               className={cn(
-                'flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[14px] font-semibold transition-all',
+                'flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold transition-all whitespace-nowrap',
+                isDesktop && 'cursor-not-allowed opacity-50',
                 inputMethod === 'camera'
                   ? 'bg-accent text-white shadow-md'
                   : 'text-text-subtle hover:text-text'
               )}
             >
-              <Icon name="camera" size={18} />
+              <Icon name="camera" size={16} />
               3D Kamera
             </button>
             <button
               type="button"
               onClick={() => setInputMethod('gallery')}
               className={cn(
-                'flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[14px] font-semibold transition-all',
+                'flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold transition-all whitespace-nowrap',
                 inputMethod === 'gallery'
                   ? 'bg-accent text-white shadow-md'
                   : 'text-text-subtle hover:text-text'
               )}
             >
-              <Icon name="upload" size={18} />
-              Galereyadan (4 ta rasm)
+              <Icon name="upload" size={16} />
+              Galereyadan
             </button>
           </div>
 
@@ -367,23 +377,61 @@ export function CapturePage() {
                 <span className="text-[13px] font-medium text-text-subtle">
                   Tanlandi: <strong className="text-accent">{selectedCount} / 4</strong> ta rasm
                 </span>
-                <button
-                  type="button"
-                  onClick={handleUseDemoGentraPhotos}
-                  className="text-[12px] font-semibold text-accent hover:underline flex items-center gap-1"
-                >
-                  <Icon name="sparkles" size={14} />
-                  Demo Gentra rasmlari
-                </button>
+                {selectedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setGallerySlots(DEFAULT_SLOTS)}
+                    className="text-[12px] font-semibold text-text-muted hover:text-danger flex items-center gap-1 transition-colors"
+                  >
+                    <Icon name="refresh" size={13} />
+                    Tozalash
+                  </button>
+                )}
               </div>
 
+              {/* Desktop: bir nechta rasmni birdan tashlash yoki tanlash */}
+              <label
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragOver(false);
+                  handleBulkFiles(event.dataTransfer.files);
+                }}
+                className={cn(
+                  'mb-4 hidden cursor-pointer items-center justify-center gap-3 rounded-2xl border border-dashed px-6 py-5 text-[14px] transition-colors lg:flex',
+                  dragOver
+                    ? 'border-accent bg-accent/10 text-text'
+                    : 'border-white/20 bg-surface/40 text-text-muted hover:border-accent/60 hover:text-text'
+                )}
+              >
+                <Icon name="upload" size={20} className="text-accent" />
+                <span>
+                  Rasmlarni shu yerga tashlang yoki{' '}
+                  <span className="text-accent-soft underline">fayllarni tanlang</span>
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(event) => {
+                    handleBulkFiles(event.target.files);
+                    event.target.value = '';
+                  }}
+                />
+              </label>
+
               {/* 4 ta rasm ramkasi */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="grid grid-cols-2 gap-3 mb-4 lg:grid-cols-4 lg:gap-4 lg:mb-6">
                 {gallerySlots.map((slot, idx) => (
                   <div
                     key={slot.angle}
                     className={cn(
-                      'relative flex flex-col items-center justify-center rounded-2xl border transition-all p-3 text-center overflow-hidden min-h-[140px]',
+                      'relative flex flex-col items-center justify-center rounded-2xl border transition-all p-3 text-center overflow-hidden min-h-[140px] lg:min-h-[200px]',
                       slot.previewUrl
                         ? 'border-accent bg-accent/10 shadow-lg'
                         : 'border-dashed border-white/20 bg-surface/40 hover:border-accent/60'
@@ -439,7 +487,7 @@ export function CapturePage() {
               )}
 
               {/* SAQLASH TUGMASI */}
-              <div className="mt-auto pt-2 pb-1">
+              <div className="mt-auto pt-2 pb-1 lg:mx-auto lg:w-full lg:max-w-md">
                 <Button
                   fullWidth
                   size="lg"

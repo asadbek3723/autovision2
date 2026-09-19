@@ -42,6 +42,7 @@ function authHeader(): string | null {
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
+  const tokenAtStart = getSessionToken();
   const auth = authHeader();
   if (auth) headers.set('Authorization', auth);
   if (init.body && !(init.body instanceof FormData)) {
@@ -80,9 +81,14 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       response.status === 401 &&
       !path.startsWith('/api/auth/login') &&
       !path.startsWith('/api/auth/register') &&
+      !path.startsWith('/api/auth/guest') &&
       !path.startsWith('/api/auth/login-available')
     ) {
-      window.dispatchEvent(new Event('carvision:session-expired'));
+      // Qaysi token bilan so'rov ketganini yuboramiz: eski token 401 qaytarganda
+      // allaqachon almashtirilgan yangi sessiya bekor qilinmasligi kerak.
+      window.dispatchEvent(
+        new CustomEvent('carvision:session-expired', { detail: { token: tokenAtStart } })
+      );
     }
 
     throw new ApiRequestError(response.status, code, message, fields, retryAfter);
@@ -102,6 +108,7 @@ const del = <T>(path: string) => request<T>(path, { method: 'DELETE' });
 export const api = {
   register: (data: RegisterInput) => post<AuthSessionResponse>('/api/auth/register', data),
   login: (data: LoginInput) => post<AuthSessionResponse>('/api/auth/login', data),
+  guest: () => post<AuthSessionResponse>('/api/auth/guest'),
   logout: () => post<void>('/api/auth/logout'),
   loginAvailable: (login: string) =>
     get<{ available: boolean; reason?: string }>(`/api/auth/login-available?login=${encodeURIComponent(login)}`),

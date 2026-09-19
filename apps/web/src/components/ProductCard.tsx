@@ -45,7 +45,7 @@ export function ProductCard({
   return (
     <Link
       to={`/product/${product.id}`}
-      className="group flex flex-col rounded-lg border border-border bg-surface p-3 transition-colors hover:border-border-strong"
+      className="group flex flex-col rounded-lg border border-border bg-surface p-3 transition-all hover:border-border-strong lg:p-4 lg:hover:-translate-y-0.5 lg:hover:shadow-[0_18px_40px_-24px_rgb(47_107_255/0.5)]"
     >
       <ProductImage src={product.image_url} alt={product.name} />
 
@@ -78,7 +78,7 @@ export function ProductGrid({
   vehicleModelId?: string | null;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
       {products.map((product) => (
         <ProductCard key={product.id} product={product} vehicleModelId={vehicleModelId} />
       ))}

@@ -6,6 +6,10 @@ const LOGIN_FAIL_LIMIT_IP = 20;
 const LOGIN_WINDOW_MINUTES = 15;
 const REGISTER_LIMIT_IP = 5;
 const REGISTER_WINDOW_HOURS = 1;
+// Umumiy Wi-Fi ortidagi ko'p qurilma bitta IP bo'lib ko'rinishi mumkin — limit keng
+const GUEST_LIMIT_IP = 60;
+
+export const GUEST_LOGIN_PREFIX = 'guest_';
 
 export async function recordAttempt(
   kind: 'login' | 'register',
@@ -56,14 +60,32 @@ export async function checkLoginLimit(loginKey: string, ip: string): Promise<voi
 export async function checkRegisterLimit(ip: string): Promise<void> {
   const windowStart = new Date(Date.now() - REGISTER_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
 
+  // Mehmon sessiyalari ham 'register' sifatida yoziladi — ular alohida limitga ega
   const { count } = await db
     .from('login_attempts')
     .select('id', { count: 'exact', head: true })
     .eq('kind', 'register')
     .eq('ip', ip)
+    .not('login_key', 'like', `${GUEST_LOGIN_PREFIX}%`)
     .gte('created_at', windowStart);
 
   if ((count ?? 0) >= REGISTER_LIMIT_IP) {
     throw tooMany(`Ushbu qurilmadan soatiga koʻpi bilan 5 marta roʻyxatdan oʻtish mumkin.`, 3600);
+  }
+}
+
+export async function checkGuestLimit(ip: string): Promise<void> {
+  const windowStart = new Date(Date.now() - REGISTER_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
+
+  const { count } = await db
+    .from('login_attempts')
+    .select('id', { count: 'exact', head: true })
+    .eq('kind', 'register')
+    .eq('ip', ip)
+    .like('login_key', `${GUEST_LOGIN_PREFIX}%`)
+    .gte('created_at', windowStart);
+
+  if ((count ?? 0) >= GUEST_LIMIT_IP) {
+    throw tooMany('Juda koʻp urinish. Birozdan keyin qayta urinib koʻring.', 3600);
   }
 }

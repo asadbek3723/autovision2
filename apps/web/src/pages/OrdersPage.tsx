@@ -48,9 +48,9 @@ export function OrdersPage() {
     <>
       <Header title="Buyurtmalarim" back />
 
-      <div className="space-y-3 px-4 pt-4">
+      <div className="space-y-3 px-4 pt-4 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0 lg:px-0 lg:pt-6">
         {orders.map((order) => (
-          <Card key={order.id} className="p-4">
+          <Card key={order.id} className="p-4 lg:p-6">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-medium">

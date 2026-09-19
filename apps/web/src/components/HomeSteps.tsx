@@ -1,4 +1,5 @@
 import { REQUIRED_CAR_PHOTOS } from '@carvision/shared';
+import { useIsDesktop } from '../lib/useIsDesktop';
 import { Icon, type IconName } from './ui/Icon';
 
 /**
@@ -18,10 +19,21 @@ const STEPS: { n: string; icon: IconName; title: string; text: string }[] = [
   { n: '03', icon: 'sparkles', title: 'Ko‘ring', text: 'Natija o‘z mashinangizda' },
 ];
 
+/** Noutbukda kamera yo'q — birinchi qadam rasm yuklash sifatida ko'rsatiladi */
+const DESKTOP_FIRST_STEP = {
+  title: 'Rasm yuklang',
+  text: 'Mashina rasmlarini fayldan tanlang',
+};
+
 export function HomeSteps({ baseDelay = 0 }: { baseDelay?: number }) {
+  const isDesktop = useIsDesktop();
+  const steps = STEPS.map((step, index) =>
+    isDesktop && index === 0 ? { ...step, ...DESKTOP_FIRST_STEP } : step
+  );
+
   return (
     <ol className="space-y-3">
-      {STEPS.map((step, index) => (
+      {steps.map((step, index) => (
         <li
           key={step.n}
           className="cv-rise flex items-center gap-3.5 rounded-[20px] border border-border/70 bg-surface/70 p-3.5"

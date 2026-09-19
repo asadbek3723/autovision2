@@ -65,13 +65,20 @@ export function ProductPage() {
     <>
       <Header title="Mahsulot" back />
 
-      <div className="px-4 pt-4 pb-4">
-        <ProductImage src={product.image_url} alt={product.name} className="aspect-square" />
+      <div className="px-4 pt-4 pb-4 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-start lg:gap-14 lg:px-0 lg:pt-6">
+        <div className="lg:sticky lg:top-24">
+          <ProductImage
+            src={product.image_url}
+            alt={product.name}
+            className="aspect-square lg:rounded-2xl lg:border lg:border-border"
+          />
+        </div>
 
-        <div className="mt-5">
+        <div>
+        <div className="mt-5 lg:mt-0">
           {product.brand && <p className="t-caption mb-1">{product.brand}</p>}
-          <h1 className="t-h1 mb-3">{product.name}</h1>
-          <p className="t-price mb-4 text-xl">{money(product.price)}</p>
+          <h1 className="t-h1 mb-3 lg:text-[34px] lg:leading-tight">{product.name}</h1>
+          <p className="t-price mb-4 text-xl lg:text-[28px]">{money(product.price)}</p>
 
           <div className="flex flex-wrap gap-1.5">
             {fits && (
@@ -150,10 +157,9 @@ export function ProductPage() {
             )}
           </Card>
         )}
-      </div>
 
-      {/* Reja 24 (Fitts's Law): asosiy CTA doim qo'l ostida */}
-      <div className="sticky bottom-20 z-20 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur">
+      {/* Reja 24 (Fitts's Law): asosiy CTA doim qo'l ostida (desktopda — kontent ichida) */}
+      <div className="sticky bottom-20 z-20 -mx-4 mt-4 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur lg:static lg:mx-0 lg:mt-8 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
         {added ? (
           <div className="flex gap-3">
             <Button variant="secondary" fullWidth onClick={() => setAdded(false)}>
@@ -176,6 +182,8 @@ export function ProductPage() {
             {outOfStock ? 'Omborda mavjud emas' : 'Savatga qo‘shish'}
           </Button>
         )}
+      </div>
+        </div>
       </div>
     </>
   );

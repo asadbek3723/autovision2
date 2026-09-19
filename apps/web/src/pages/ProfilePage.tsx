@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { formatDate } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
+import { AUTH_ENABLED } from '../lib/config';
 import { useStudio } from '../store/useStudio';
 import { Header } from '../components/AppShell';
 import { Card } from '../components/ui/Primitives';
@@ -55,8 +56,9 @@ export function ProfilePage() {
     <>
       <Header title="Profil" />
 
-      <div className="px-4 pt-4">
-        <Card className="mb-6 p-4">
+      <div className="px-4 pt-4 lg:grid lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start lg:gap-10 lg:px-0 lg:pt-6">
+        <div className="lg:sticky lg:top-24">
+        <Card className="mb-6 p-4 lg:p-5">
           {me.isLoading ? (
             <Skeleton className="h-12" />
           ) : (
@@ -76,26 +78,30 @@ export function ProfilePage() {
 
         <Card className="mb-6 divide-y divide-border p-0">
           <Row to="/orders" icon="package" title="Buyurtmalarim" />
-          <Row
-            to="/seller"
-            icon="store"
-            title="Sotuvchi kabineti"
-            subtitle={me.data?.seller?.business_name ?? 'B2B dashboard'}
-          />
+          {/* Auth o'chiq: mehmonda sotuvchi kabineti yo'q — o'lik havola ko'rsatilmaydi */}
+          {(AUTH_ENABLED || me.data?.user.role === 'seller') && (
+            <Row
+              to="/seller"
+              icon="store"
+              title="Sotuvchi kabineti"
+              subtitle={me.data?.seller?.business_name ?? 'B2B dashboard'}
+            />
+          )}
         </Card>
+        </div>
 
         {/* Reja 5: bir nechta konfiguratsiyani yaratish va taqqoslash */}
         <section>
           <h2 className="t-h2 mb-3">Mening konfiguratsiyalarim</h2>
 
           {generations.isLoading ? (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 lg:grid-cols-4 lg:gap-4">
               {[0, 1, 2].map((i) => (
                 <Skeleton key={i} className="aspect-square" />
               ))}
             </div>
           ) : generations.data?.generations.length ? (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 lg:grid-cols-4 lg:gap-4">
               {generations.data.generations
                 .filter((g) => g.generated_image)
                 .map((generation) => (
@@ -121,14 +127,16 @@ export function ProfilePage() {
           )}
         </section>
 
-        <button
-          type="button"
-          onClick={() => void handleLogout()}
-          className="mt-6 flex min-h-11 w-full items-center justify-center gap-1.5 py-3 text-sm text-danger"
-        >
-          <Icon name="x" size={14} />
-          Chiqish
-        </button>
+        {AUTH_ENABLED && (
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            className="mt-6 flex min-h-11 w-full items-center justify-center gap-1.5 py-3 text-sm text-danger lg:col-start-1 lg:mt-0"
+          >
+            <Icon name="x" size={14} />
+            Chiqish
+          </button>
+        )}
       </div>
     </>
   );

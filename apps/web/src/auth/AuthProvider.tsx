@@ -14,6 +14,7 @@ import {
   clearSessionToken,
   subscribeToSessionChanges,
 } from '../lib/session';
+import { AUTH_ENABLED } from '../lib/config';
 
 interface AuthState {
   status: 'loading' | 'guest' | 'user' | 'seller';
@@ -30,6 +31,37 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const GUEST_STATE: AuthState = { status: 'guest', user: null, seller: null };
+
+/*
+ * Auth o'chirilganda har qurilma uchun bitta mehmon sessiyasi. StrictMode'da effect ikki
+ * marta ishlaydi — bir vaqtda ikkita mehmon yaratilmasligi uchun so'rov umumiy promise'da.
+ * Ketma-ket muvaffaqiyatsizlikda (masalan backend deploy qilinmagan) cheksiz sikl bo'lmasligi
+ * uchun qayta yaratish oralig'i cheklangan.
+ */
+let guestInFlight: Promise<AuthState> | null = null;
+let lastGuestAt = 0;
+const GUEST_RETRY_MS = 4000;
+
+function ensureGuestSession(throttle = false): Promise<AuthState> {
+  if (guestInFlight) return guestInFlight;
+  if (throttle && Date.now() - lastGuestAt < GUEST_RETRY_MS) return Promise.resolve(GUEST_STATE);
+  lastGuestAt = Date.now();
+
+  guestInFlight = api
+    .guest()
+    .then((res): AuthState => {
+      setSessionToken(res.token);
+      return { status: 'user', user: res.user, seller: null };
+    })
+    .catch((): AuthState => GUEST_STATE)
+    .finally(() => {
+      guestInFlight = null;
+    });
+
+  return guestInFlight;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     status: 'loading',
@@ -40,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchMe = useCallback(async () => {
     const token = getSessionToken();
     if (!token) {
-      setState({ status: 'guest', user: null, seller: null });
+      setState(AUTH_ENABLED ? GUEST_STATE : await ensureGuestSession());
       return;
     }
 
@@ -53,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (err) {
       clearSessionToken();
-      setState({ status: 'guest', user: null, seller: null });
+      setState(AUTH_ENABLED ? GUEST_STATE : await ensureGuestSession());
     }
   }, []);
 
@@ -66,9 +98,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       fetchMe();
     });
 
-    const handleExpired = () => {
+    const handleExpired = (event: Event) => {
+      // Allaqachon almashtirilgan (eski) tokenning kechikkan 401 javobi — e'tiborsiz
+      const usedToken = (event as CustomEvent<{ token: string | null }>).detail?.token ?? null;
+      if (usedToken !== getSessionToken()) return;
+
       clearSessionToken();
-      setState({ status: 'guest', user: null, seller: null });
+      if (AUTH_ENABLED) {
+        setState(GUEST_STATE);
+        return;
+      }
+      // Auth o'chiq: muddati tugagan mehmon sessiyasi jimgina yangisiga almashadi
+      setState({ status: 'loading', user: null, seller: null });
+      void ensureGuestSession(true).then(setState);
     };
 
     window.addEventListener('carvision:session-expired', handleExpired);

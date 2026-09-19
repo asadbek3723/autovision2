@@ -90,8 +90,8 @@ export function CheckoutPage() {
     <>
       <Header title="Buyurtma" back />
 
-      <div className="space-y-6 px-4 pt-4">
-        <Card className="p-4">
+      <div className="space-y-6 px-4 pt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-8 lg:space-y-0 lg:px-0 lg:pt-6">
+        <Card className="p-4 lg:order-2 lg:sticky lg:top-24 lg:p-6">
           <h2 className="t-h2 mb-3">Buyurtma tarkibi</h2>
           <ul className="space-y-2">
             {items.map((item) => (
@@ -109,9 +109,24 @@ export function CheckoutPage() {
             <span className="t-caption">Jami</span>
             <span className="t-price text-xl">{money(cart.data?.cart.total ?? 0)}</span>
           </div>
+          {/* Desktop: tasdiqlash tugmasi xulosa kartasi ichida */}
+          <div className="mt-5 hidden lg:block">
+            <Button
+              fullWidth
+              size="lg"
+              disabled={!phoneValid}
+              loading={createOrder.isPending}
+              onClick={() => {
+                setError(null);
+                createOrder.mutate();
+              }}
+            >
+              Buyurtmani tasdiqlash
+            </Button>
+          </div>
         </Card>
 
-        <div className="space-y-4">
+        <div className="space-y-4 lg:order-1 lg:space-y-5">
           <Field
             label="Telefon raqam"
             hint="Sotuvchi shu raqam orqali bog‘lanadi."
@@ -137,14 +152,14 @@ export function CheckoutPage() {
         </div>
 
         {error && (
-          <p className="flex items-center gap-2 text-sm text-danger">
+          <p className="flex items-center gap-2 text-sm text-danger lg:order-3 lg:col-start-1">
             <Icon name="alert" size={16} />
             {error}
           </p>
         )}
       </div>
 
-      <div className="sticky bottom-20 z-20 mt-6 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur">
+      <div className="sticky bottom-20 z-20 mt-6 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur lg:hidden">
         <Button
           fullWidth
           size="lg"

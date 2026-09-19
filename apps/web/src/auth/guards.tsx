@@ -3,6 +3,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import type { UserRole } from '@carvision/shared';
 import { useAuth } from './useAuth';
 import { Spinner } from '../components/ui/States';
+import { Button } from '../components/ui/Button';
+import { AUTH_ENABLED } from '../lib/config';
 
 export function AuthLoadingScreen() {
   return (
@@ -12,6 +14,20 @@ export function AuthLoadingScreen() {
         <Spinner className="w-8 h-8 text-accent relative z-10" />
       </div>
       <p className="t-body text-text-muted font-medium animate-pulse">Yuklanmoqda...</p>
+    </div>
+  );
+}
+
+/** Auth o'chiq holatda mehmon sessiyasi yaratilmasa (tarmoq/server xatosi) ko'rsatiladi */
+function GuestSessionFailedScreen() {
+  const { refresh } = useAuth();
+  return (
+    <div className="min-h-dvh flex flex-col items-center justify-center bg-bg p-6 text-center">
+      <h1 className="t-h1 mb-2">Ulanib bo‘lmadi</h1>
+      <p className="t-caption mb-6 max-w-xs">
+        Serverga ulanishda muammo bor. Internetni tekshirib, qaytadan urinib ko‘ring.
+      </p>
+      <Button onClick={() => void refresh()}>Qayta urinish</Button>
     </div>
   );
 }
@@ -26,6 +42,8 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   if (status === 'loading') return <AuthLoadingScreen />;
   if (status === 'guest') {
+    // Auth o'chiq: /auth ga yo'naltirmaymiz — mehmon sessiyasi hosil bo'lishini kutamiz
+    if (!AUTH_ENABLED) return <GuestSessionFailedScreen />;
     return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
   }
   return <>{children}</>;
@@ -77,6 +95,9 @@ export function GuestOnly({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   if (status === 'loading') return <AuthLoadingScreen />;
+
+  // Auth o'chiq: /auth sahifasi yo'q — to'g'ri asosiy sahifaga
+  if (!AUTH_ENABLED) return <Navigate to="/" replace />;
 
   if (status !== 'guest') {
     // Avvalgi manzil bo'lsa, o'sha joyga qaytarish

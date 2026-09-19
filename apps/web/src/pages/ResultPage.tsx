@@ -52,24 +52,30 @@ export function ResultPage() {
     <>
       <Header title="Natija" back />
 
-      <div className="px-4 pt-4">
-        {generation.generated_image ? (
-          <CompareSlider before={generation.original_image} after={generation.generated_image} />
-        ) : (
-          <Skeleton className="aspect-[4/3] w-full" />
-        )}
-
-        {selections.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {selections.map((text) => (
-              <Badge key={text} tone="accent">
-                {text}
-              </Badge>
-            ))}
+      <div className="px-4 pt-4 lg:px-0 lg:pt-6">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-start lg:gap-10">
+          <div>
+            {generation.generated_image ? (
+              <CompareSlider before={generation.original_image} after={generation.generated_image} />
+            ) : (
+              <Skeleton className="aspect-[4/3] w-full" />
+            )}
           </div>
-        )}
 
-        <div className="mt-6 flex gap-3">
+          <div className="lg:sticky lg:top-24 lg:rounded-2xl lg:border lg:border-border lg:bg-surface/60 lg:p-6 lg:[&>*:nth-child(2)]:mt-0">
+            <h2 className="t-h2 hidden lg:mb-4 lg:block lg:text-[20px]">Tanlangan o‘zgarishlar</h2>
+
+            {selections.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {selections.map((text) => (
+                  <Badge key={text} tone="accent">
+                    {text}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-3 lg:mt-8 lg:flex-col">
           <Button variant="secondary" fullWidth onClick={() => navigate('/')}>
             <Icon name="sliders" size={16} />
             O‘zgartirish
@@ -83,10 +89,12 @@ export function ResultPage() {
             Mahsulotlar
             <Icon name="arrow-right" size={16} />
           </Button>
+            </div>
+          </div>
         </div>
 
         {/* Reja 26: AI konfiguratsiyasidan marketplacega o'tish uzluksiz */}
-        <section className="mt-10">
+        <section className="mt-10 lg:mt-16">
           <div className="mb-4 flex items-baseline justify-between gap-4">
             <h2 className="t-h2">Shu konfiguratsiya uchun</h2>
             <Link to={`/market?categories=${categories.join(',')}`} className="text-sm text-accent-soft">
@@ -101,13 +109,13 @@ export function ResultPage() {
           </div>
 
           {products.isLoading ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
               {[0, 1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-56" />
               ))}
             </div>
           ) : products.data?.products.length ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
               {products.data.products.map((product) => (
                 <ProductCard
                   key={product.id}

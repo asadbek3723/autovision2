@@ -55,7 +55,8 @@ export function CartPage() {
     <>
       <Header title="Savat" />
 
-      <div className="space-y-3 px-4 pt-4">
+      <div className="px-4 pt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-8 lg:px-0 lg:pt-6">
+        <div className="space-y-3">
         {cart.items.map((item) => {
           const product = item.product;
           if (!product) return null;
@@ -114,18 +115,27 @@ export function CartPage() {
           );
         })}
 
-        <Card className="p-4">
+        </div>
+
+        <Card className="mt-3 p-4 lg:sticky lg:top-24 lg:mt-0 lg:p-6">
           <div className="flex items-baseline justify-between">
             <span className="t-caption">Jami</span>
-            <span className="t-price text-xl">{money(cart.total)}</span>
+            <span className="t-price text-xl lg:text-2xl">{money(cart.total)}</span>
           </div>
           <p className="t-caption mt-2">
             To‘lov ilova ichida amalga oshirilmaydi — sotuvchi siz bilan bog‘lanadi.
           </p>
+          {/* Desktop: tugma xulosa kartasi ichida (mobilda pastdagi sticky panel ishlatiladi) */}
+          <div className="mt-5 hidden lg:block">
+            <Button fullWidth size="lg" onClick={() => navigate('/checkout')}>
+              Buyurtma berish
+              <Icon name="arrow-right" size={18} />
+            </Button>
+          </div>
         </Card>
       </div>
 
-      <div className="sticky bottom-20 z-20 mt-4 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur">
+      <div className="sticky bottom-20 z-20 mt-4 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur lg:hidden">
         <Button fullWidth size="lg" onClick={() => navigate('/checkout')}>
           Buyurtma berish
           <Icon name="arrow-right" size={18} />

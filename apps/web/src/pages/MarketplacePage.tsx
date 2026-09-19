@@ -47,8 +47,8 @@ export function MarketplacePage() {
     <>
       <Header title="Katalog" />
 
-      <div className="px-4 pt-4">
-        <div className="relative">
+      <div className="px-4 pt-4 lg:px-0">
+        <div className="relative lg:max-w-xl">
           <Icon
             name="search"
             size={18}
@@ -63,7 +63,7 @@ export function MarketplacePage() {
           />
         </div>
 
-        <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:mt-5 lg:flex-wrap lg:overflow-visible lg:px-0">
           {vehicleModelId && (
             <Chip selected={onlyCompatible} onClick={() => setOnlyCompatible((v) => !v)}>
               Mening mashinamga mos
@@ -80,9 +80,9 @@ export function MarketplacePage() {
           ))}
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 lg:mt-8">
           {products.isLoading ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
               {[0, 1, 2, 3, 4, 5].map((i) => (
                 <Skeleton key={i} className="h-56" />
               ))}
