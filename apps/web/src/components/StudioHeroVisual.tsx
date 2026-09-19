@@ -1,79 +1,56 @@
-import { Icon } from './ui/Icon';
+import type { CSSProperties } from 'react';
 
 /**
- * Desktop (lg+) Studio kirish sahifasining o'ng tomonidagi vizual: demo avtomobil
- * fotosurati, ustida konfiguratorning "shisha" panellari. Faqat ko'rinish — interaktiv emas.
+ * Desktop (lg+) Studio kirish sahifasining o'ng tomoni: ramkasiz, kinematografik
+ * mashina rasmi. Rasm ekran chetigacha ochiladi va chap/pastki/yuqori tomondan
+ * qorong'i fonga singib ketadi — kartochka, chip yoki bezak yo'q.
+ *
+ * Bu blok StudioPage'ning to'liq kenglikdagi (relative) konteyneri ichida joylashadi.
  */
 
-const SWATCHES = ['#f4f5f7', '#1a1c20', '#c2313d', '#2f6bff', '#d8a53a'];
+const CAR = '/images/b49d788e-38c8-45ef-9ad1-5475a421647f-960x540.jpg';
+
+/** Ikki yo'nalishli yumshoq so'nish: chapga va pastga/tepaga */
+const FADE: CSSProperties = {
+  WebkitMaskImage:
+    'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, transparent 0%, #000 22%, #000 74%, transparent 100%)',
+  WebkitMaskComposite: 'source-in',
+  maskImage:
+    'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, transparent 0%, #000 22%, #000 74%, transparent 100%)',
+  maskComposite: 'intersect',
+};
 
 export function StudioHeroVisual() {
   return (
-    <div className="relative hidden min-w-0 flex-1 lg:block" aria-hidden="true">
-      {/* orqa fon nuri */}
+    <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[62%] lg:block" aria-hidden="true">
+      {/* poydevor nuri: mashina ostidagi salqin ko'k yorug'lik */}
       <div
-        className="cv-breathe pointer-events-none absolute -inset-16"
-        style={{
-          background:
-            'radial-gradient(60% 55% at 60% 45%, rgb(47 107 255 / 0.28), transparent 70%)',
-        }}
+        className="absolute inset-x-[8%] bottom-[10%] h-[34%] blur-3xl"
+        style={{ background: 'radial-gradient(60% 100% at 55% 100%, rgb(47 107 255 / 0.35), transparent 70%)' }}
       />
 
-      <div className="cv-rise relative" style={{ animationDelay: '200ms' }}>
-       <div className="cv-float relative">
-        <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-surface shadow-[0_40px_120px_-30px_rgb(47_107_255/0.55)]">
-          <img
-            src="/images/b49d788e-38c8-45ef-9ad1-5475a421647f-960x540.jpg"
-            alt=""
-            className="aspect-[16/10] w-full object-cover"
-            draggable={false}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-bg/85 via-bg/10 to-bg/25" />
-          <div className="cv-scan pointer-events-none absolute inset-0" />
+      <div
+        className="cv-rise absolute top-1/2 right-0 aspect-[16/9] w-[min(100%,960px)] -translate-y-1/2"
+        style={{ animationDelay: '150ms' }}
+      >
+        <img
+          src={CAR}
+          alt=""
+          draggable={false}
+          className="h-full w-full object-cover [filter:saturate(0.92)_contrast(1.04)]"
+          style={FADE}
+        />
+        {/* mashina atrofini chuqurlashtirish */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(80% 85% at 60% 50%, transparent 45%, rgb(11 12 14 / 0.7) 100%)' }}
+        />
+      </div>
 
-          {/* yuqori chap — holat */}
-          <div className="absolute top-5 left-5 flex items-center gap-2 rounded-full border border-white/10 bg-bg/60 px-3.5 py-1.5 text-[12px] font-medium text-text backdrop-blur-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            AI Studio
-          </div>
-
-          {/* pastki — mashina va tanlov */}
-          <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-4">
-            <div className="rounded-2xl border border-white/10 bg-bg/60 px-4 py-3 backdrop-blur-md">
-              <p className="text-[15px] font-semibold text-text">Chevrolet Gentra</p>
-              <p className="text-[12px] text-text-muted">Disk · Far · Bamper · Rang</p>
-            </div>
-
-            <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-bg/60 p-2 backdrop-blur-md">
-              {SWATCHES.map((color, index) => (
-                <span
-                  key={color}
-                  className={
-                    index === 3
-                      ? 'h-6 w-6 rounded-full border-2 border-white/90'
-                      : 'h-6 w-6 rounded-full border border-white/15'
-                  }
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* suzuvchi kartochka */}
-        <div className="absolute -top-6 -right-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-surface/90 px-4 py-3 shadow-2xl backdrop-blur-xl">
-          <span
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
-            style={{ background: 'linear-gradient(145deg, #4a80ff, #1d46b8)' }}
-          >
-            <Icon name="sparkles" size={18} />
-          </span>
-          <span>
-            <span className="block text-[13px] font-semibold text-text">Natija tayyor</span>
-            <span className="block text-[12px] text-text-muted">O‘z mashinangizda ko‘ring</span>
-          </span>
-        </div>
-       </div>
+      {/* pastdagi sokin yozuv */}
+      <div className="absolute right-10 bottom-8 flex items-center gap-3 text-[12px] tracking-[0.18em] text-text-subtle uppercase">
+        <span className="h-px w-10 bg-border-strong" />
+        Chevrolet Gentra
       </div>
     </div>
   );

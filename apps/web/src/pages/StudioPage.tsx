@@ -85,12 +85,15 @@ export function StudioPage() {
           shuning uchun rasm yo'qligi bo'shliq qoldirmaydi).
         */}
         <div
-          className="pointer-events-none absolute top-0 right-0 h-[58%] w-[62%] lg:h-full lg:w-[70%]"
+          className="pointer-events-none absolute top-0 right-0 h-[58%] w-[62%] lg:hidden"
           style={{
             background:
               'radial-gradient(70% 55% at 78% 34%, rgb(47 107 255 / 0.22), transparent 70%)',
           }}
         />
+
+        {/* Desktop: ramkasiz, kinematografik mashina rasmi (ekran chetigacha) */}
+        <StudioHeroVisual />
 
         <div className="relative flex flex-1 flex-col lg:mx-auto lg:w-full lg:max-w-[1240px] lg:flex-none lg:flex-row lg:items-center lg:gap-20 lg:px-10 lg:py-8">
           <div className="flex flex-1 flex-col lg:w-[540px] lg:flex-none">
@@ -187,8 +190,6 @@ export function StudioPage() {
             </div>
           </div>
 
-          {/* ------------------------------------------ desktop vizuali */}
-          <StudioHeroVisual />
         </div>
       </div>
     );
