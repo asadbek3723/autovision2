@@ -14,13 +14,13 @@ import { orderRoutes } from './routes/orders.js';
 import { sellerRoutes } from './routes/seller.js';
 
 export async function buildServer() {
+  const isVercel = Boolean(process.env.VERCEL || process.env.NOW_REGION);
   const app = Fastify({
-    logger: env.isDev
+    logger: env.isDev && !isVercel
       ? { transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss' } } }
-      : true,
+      : { level: env.isDev ? 'debug' : 'info' },
     bodyLimit: 15 * 1024 * 1024,
-    // Vercel/proxy orqasida haqiqiy klient IP'si X-Forwarded-For'dan olinadi —
-    // aks holda login/ro'yxatdan o'tish rate limit'i hamma foydalanuvchini bitta IP deb hisoblaydi.
+    // Vercel/proxy orqasida haqiqiy klient IP'si X-Forwarded-For'dan olinadi
     trustProxy: true,
   });
 
