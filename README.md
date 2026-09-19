@@ -1,6 +1,8 @@
 # CarVision
 
-AI Car Customization + Tuning Parts Marketplace — Telegram Mini App MVP.
+AI Car Customization + Tuning Parts Marketplace — web ilova (login/parol bilan).
+
+> Deploy: [DEPLOY.md](DEPLOY.md)
 
 Foydalanuvchi avtomobili rasmini yuklaydi, AI tuning o'zgarishlarini aynan shu
 avtomobilda ko'rsatadi, so'ng mos keladigan real ehtiyot qismlarni marketplace
@@ -15,7 +17,7 @@ Upload → AI Customize → Visualize → Find Parts → Calculate Price → Ord
 ```
 apps/
   api/      Fastify backend — auth, upload, AI generation, marketplace, order, seller
-  web/      React + Vite Telegram Mini App
+  web/      React + Vite web ilova
 packages/
   shared/   Umumiy tiplar, customization katalogi va AI prompt qurilishi
 supabase/
@@ -31,7 +33,7 @@ scripts/
 | Frontend | React 19 + Vite + TypeScript |
 | Styling | Tailwind CSS v4 (CSS-first design tokens) |
 | State | Zustand (studio sessiyasi) + React Query (server state) |
-| Telegram | Telegram Mini Apps SDK (`telegram-web-app.js`) |
+| Auth | Login + parol (scrypt), server tomonda saqlanadigan sessiyalar, rollar: foydalanuvchi / servis egasi |
 | Backend | Node.js + TypeScript + Fastify |
 | DB / Storage | Supabase PostgreSQL + Supabase Storage |
 | AI | image-to-image / image editing API (Gemini, OpenAI yoki mock) |
@@ -57,9 +59,7 @@ cp .env.example .env
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Supabase > Project Settings > API |
 | `AI_PROVIDER` | `mock` (kalitsiz), `gemini` yoki `openai` |
 
-`TELEGRAM_BOT_TOKEN`/`TELEGRAM_BOT_USERNAME` ixtiyoriy — faqat Telegram Mini
-App yoki Login Widget orqali kirishni yoqmoqchi bo'lsangiz kerak (pastga
-qarang). Ular bo'lmasa ham `ALLOW_INSECURE_AUTH=true` bilan sayt to'liq ishlaydi.
+`SUPABASE_SERVICE_ROLE_KEY` ga **secret** kalit (`sb_secret_...`) qo‘yiladi — publishable/anon kalit xavfsiz emas.
 
 `AI_PROVIDER=mock` boʻlsa butun oqim API kalitlarsiz ishlaydi — mock provider
 original rasmni qaytaradi, shuning uchun marketplace, savat va order qismlarini
@@ -67,17 +67,9 @@ AI hisobisiz sinash mumkin.
 
 ### 3. Baza
 
-```bash
-npm run db:push
-```
+Supabase > SQL Editor da `supabase/migrations/` fayllarini nomi bo‘yicha tartib bilan bajaring (yoki `.env` ga `DATABASE_URL` yozib `npm run db:migrate`). Migratsiyalar takroran ishga tushirilsa ham xato bermaydi.
 
-`DATABASE_URL` `.env` da bo'lsa (Supabase > Project Settings > Database >
-Connection string > URI), skript `supabase/schema.sql` ni `pg` paketi orqali
-to'g'ridan-to'g'ri qo'llaydi — alohida `psql` o'rnatish shart emas.
-
-`DATABASE_URL` yo'q bo'lsa, `supabase/schema.sql` ni qo'lda Supabase SQL
-Editor'ga joylashtirib Run bosing. Fayl idempotent — qayta ishga tushirsangiz
-ham xato bermaydi, storage bucket (`carvision`) ham shu bilan yaratiladi.
+`supabase/schema.sql` faqat **bo‘sh dev bazani** noldan qurish uchun — u barcha jadvallarni o‘chiradi, production’da ishlatmang.
 
 ### 4. Dev serverlar
 
@@ -87,10 +79,6 @@ npm run dev
 
 - API: http://localhost:8787 (`/health` — tekshirish uchun)
 - Web: http://localhost:5173
-
-Brauzerda ochilganda `ALLOW_INSECURE_AUTH=true` tufayli test foydalanuvchi bilan
-ishlaydi — Telegram bot yoki Mini App kerak emas, to'g'ridan-to'g'ri
-`http://localhost:5173` linkidan kirib ishlatavering.
 
 ## API
 
@@ -109,9 +97,7 @@ ishlaydi — Telegram bot yoki Mini App kerak emas, to'g'ridan-to'g'ri
 | GET | `/api/seller/stats`, `/api/seller/products`, `/api/seller/orders` | B2B dashboard |
 | PATCH | `/api/seller/orders/:id` | Status: New → Accepted → Installing → Completed |
 
-Autentifikatsiya: `Authorization: tma <initData>` (Telegram Mini App) yoki
-`Authorization: Bearer <token>` (brauzer sessiyasi, Login Widget orqali
-kirilganda). Backend Telegram imzosini HMAC-SHA256 bilan tekshiradi.
+Autentifikatsiya: `Authorization: Bearer <token>` (token `POST /api/auth/login` yoki `/api/auth/register` javobida keladi; serverda xeshlanib saqlanadi va logout’da bekor qilinadi).
 
 ## Studio konfigurator
 
@@ -157,23 +143,6 @@ balansi (`/seller/credits`). Sotuvchi shu yerda o'z mahsulotini AI bilan
 namoyish qiluvchi rasm yaratishi mumkin — har chaqiruv 1 kredit sarflaydi
 (100 kredit = $20). Yangi sotuvchiga 3 ta bepul kredit beriladi. Kredit sotib
 olish hozircha **mock to'lov** — real Payme/Click keyinroq shu joyga ulanadi.
-
-## Brauzerdan kirish (ixtiyoriy Telegram Login Widget)
-
-Sayt hech qanday Telegram bot yoki Mini App'siz, oddiy link orqali ham to'liq
-ishlaydi — `ALLOW_INSECURE_AUTH=true` bilan brauzerda ochilganda avtomatik
-test foydalanuvchi bilan kiradi. Production'da real foydalanuvchilar uchun
-ikkita variant bor:
-
-- **Hech narsa sozlamasdan** — `ALLOW_INSECURE_AUTH` production'da
-  ishlatilmaydi (xavfsizlik uchun taqiqlangan), shuning uchun bu holatda
-  `/login` sahifasi ko'rinadi va `VITE_TELEGRAM_BOT_USERNAME` sozlanmagani
-  haqida xabar beradi — Telegram bot kerak bo'lmasa, boshqa login usulini
-  (masalan email/parol) qo'shish kerak bo'ladi.
-- **Telegram Login Widget yoqish** — `.env`da `TELEGRAM_BOT_USERNAME` va
-  `apps/web/.env`da `VITE_TELEGRAM_BOT_USERNAME` (bot foydalanuvchi nomi,
-  `@`siz) ko'rsating, so'ng BotFather'da `/setdomain` orqali domeningizni
-  botga bog'lang.
 
 ## MVP doirasi
 

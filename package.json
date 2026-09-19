@@ -13,7 +13,6 @@
     "dev:web": "npm run dev -w @carvision/web",
     "build": "npm run build -w @carvision/shared && npm run build -w @carvision/api && npm run build -w @carvision/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "db:push": "node scripts/db-push.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "postinstall": "npm run build -w @carvision/shared",
     "predev": "npm run build -w @carvision/shared",
