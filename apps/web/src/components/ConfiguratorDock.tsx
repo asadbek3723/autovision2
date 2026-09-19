@@ -1,7 +1,7 @@
 import { useRef, type ReactNode } from 'react';
 import { CUSTOMIZATION_GROUPS, type CustomizationOption } from '@carvision/shared';
 import { cn } from '../lib/format';
-import { haptic } from '../lib/telegram';
+import { haptic } from '../lib/haptics';
 import { Icon } from './ui/Icon';
 
 /**

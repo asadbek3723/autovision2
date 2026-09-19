@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiRequestError } from '../lib/api';
 import { money } from '../lib/format';
-import { notify } from '../lib/telegram';
+import { notifyHaptic as notify } from '../lib/haptics';
 import { Header } from '../components/AppShell';
 import { Button } from '../components/ui/Button';
 import { Card, Field, Input, Textarea } from '../components/ui/Primitives';

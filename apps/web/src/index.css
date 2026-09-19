@@ -142,7 +142,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Safe area — Telegram Mini App full screen rejimida */
+  /* Safe area — iPhone notch va home indicator uchun */
   .safe-bottom {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
   }

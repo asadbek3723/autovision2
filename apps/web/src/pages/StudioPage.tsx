@@ -9,7 +9,7 @@ import {
 } from '@carvision/shared';
 import { api, ApiRequestError } from '../lib/api';
 import { cn } from '../lib/format';
-import { notify } from '../lib/telegram';
+import { notifyHaptic as notify } from '../lib/haptics';
 import { useStudio } from '../store/useStudio';
 import { ConfiguratorDock } from '../components/ConfiguratorDock';
 import { HomeSteps } from '../components/HomeSteps';

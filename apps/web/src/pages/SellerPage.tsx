@@ -161,7 +161,7 @@ export function SellerPage() {
   const register = useMutation({
     mutationFn: () => {
       // Yangi tizimda seller ro'yxatdan o'tish paytida yaratiladi.
-      // Bu eski Telegram flow uchun edi — hozir ishlatilmaydi.
+      // Sotuvchi profili ro'yxatdan o'tishda yaratiladi (rol o'zgarmaydi).
       return Promise.reject(new Error('Bu funksiya ishlamaydi. Qaytadan ro\'yxatdan o\'ting.'));
     },
     onSuccess: () => {

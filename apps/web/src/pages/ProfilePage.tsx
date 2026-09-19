@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { formatDate } from '../lib/format';
-import { isTelegram } from '../lib/telegram';
-import { clearSessionToken, getSessionToken } from '../lib/session';
+import { useAuth } from '../auth/useAuth';
+import { useStudio } from '../store/useStudio';
 import { Header } from '../components/AppShell';
 import { Card } from '../components/ui/Primitives';
 import { Icon, type IconName } from '../components/ui/Icon';
@@ -40,7 +40,16 @@ function Row({
 export function ProfilePage() {
   const me = useQuery({ queryKey: ['me'], queryFn: api.me });
   const generations = useQuery({ queryKey: ['generations'], queryFn: api.generations });
-  const showLogout = !isTelegram() && Boolean(getSessionToken());
+  const { logout } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Chiqishda oldingi foydalanuvchining ma'lumotlari (keshlangan so'rovlar va
+  // Studio'dagi mashina) keyingi kirgan foydalanuvchiga ko'rinib qolmasligi kerak.
+  const handleLogout = async () => {
+    await logout();
+    useStudio.getState().reset();
+    queryClient.clear();
+  };
 
   return (
     <>
@@ -112,19 +121,14 @@ export function ProfilePage() {
           )}
         </section>
 
-        {showLogout && (
-          <button
-            type="button"
-            onClick={() => {
-              clearSessionToken();
-              window.location.reload();
-            }}
-            className="mt-6 flex w-full items-center justify-center gap-1.5 py-3 text-sm text-danger"
-          >
-            <Icon name="x" size={14} />
-            Chiqish
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          className="mt-6 flex min-h-11 w-full items-center justify-center gap-1.5 py-3 text-sm text-danger"
+        >
+          <Icon name="x" size={14} />
+          Chiqish
+        </button>
       </div>
     </>
   );

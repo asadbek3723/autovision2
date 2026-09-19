@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { money } from '../lib/format';
-import { notify } from '../lib/telegram';
+import { notifyHaptic as notify } from '../lib/haptics';
 import { useStudio } from '../store/useStudio';
 import { Header } from '../components/AppShell';
 import { ProductImage } from '../components/ProductCard';
