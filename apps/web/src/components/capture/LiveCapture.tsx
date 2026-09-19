@@ -211,14 +211,37 @@ export function LiveCapture({
       setLandscape(window.innerWidth > window.innerHeight);
       setBox(containBox(stage.clientWidth, stage.clientHeight, video.videoWidth, video.videoHeight));
     };
+    // Telefon burilganda kamera oqimining o'lchami (videoWidth/Height) portretdan
+    // landshaftga o'zgaradi va faqat video'ning 'resize' hodisasi bunga xabar beradi;
+    // 'loadedmetadata' faqat bir marta ishlaydi — ramka tik holda qolib ketardi.
     video.addEventListener('loadedmetadata', measure);
+    video.addEventListener('loadeddata', measure);
+    video.addEventListener('playing', measure);
+    video.addEventListener('resize', measure);
     window.addEventListener('resize', measure);
     window.addEventListener('orientationchange', measure);
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (observer && stageRef.current) observer.observe(stageRef.current);
+    // Ba'zi brauzerlar (iOS in-app) burilgandan keyin hodisa bermaydi — o'lchamni ham tekshirib turamiz
+    let lastW = 0;
+    let lastH = 0;
+    const poll = window.setInterval(() => {
+      if (video.videoWidth !== lastW || video.videoHeight !== lastH) {
+        lastW = video.videoWidth;
+        lastH = video.videoHeight;
+        measure();
+      }
+    }, 400);
     measure();
     return () => {
       video.removeEventListener('loadedmetadata', measure);
+      video.removeEventListener('loadeddata', measure);
+      video.removeEventListener('playing', measure);
+      video.removeEventListener('resize', measure);
       window.removeEventListener('resize', measure);
       window.removeEventListener('orientationchange', measure);
+      observer?.disconnect();
+      window.clearInterval(poll);
     };
   }, [stream]);
 

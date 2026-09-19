@@ -9,6 +9,7 @@ import {
   type Generation,
 } from '@carvision/shared';
 import { api, ApiRequestError } from '../lib/api';
+import { generateWithFallback, isLocalGeneration } from '../lib/generate';
 import { cn, money } from '../lib/format';
 import { notifyHaptic as notify } from '../lib/haptics';
 import { useStudio } from '../store/useStudio';
@@ -43,13 +44,14 @@ export function ResultPage() {
 
   const generateFor = useMutation({
     mutationFn: (photoUrl: string) =>
-      api.generate({
-        car_id: car!.id,
-        photo_url: photoUrl,
+      generateWithFallback({
+        carId: car!.id,
+        sourceUrl: photoUrl,
+        photoUrl,
         options: generation?.options ?? options,
-        free_text: freeText.trim() || undefined,
+        freeText: freeText.trim() || undefined,
       }),
-    onSuccess: ({ generation: next }) => {
+    onSuccess: (next) => {
       setGeneration(next);
       setActivePhoto(next.original_image);
       queryClient.invalidateQueries({ queryKey: ['generations'] });
@@ -153,6 +155,16 @@ export function ResultPage() {
                   )}
                 </div>
               </div>
+            )}
+
+            {activeResult && isLocalGeneration(activeResult) && (
+              <p className="mt-3 flex items-start gap-1.5 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-[13px] text-warning">
+                <Icon name="alert" size={14} className="mt-0.5 shrink-0" />
+                <span>
+                  Tezkor rejim: AI xizmati hozir band, shuning uchun faqat <b>rang</b> o‘zgartirildi.
+                  {productIds.length > 0 && ' Tanlangan far, disk va boshqa qismlar AI ulanganda qo‘llanadi.'}
+                </span>
+              </p>
             )}
 
             {genError && (

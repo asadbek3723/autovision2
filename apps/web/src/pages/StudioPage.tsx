@@ -6,6 +6,7 @@ import {
   colorLabel,
 } from '@carvision/shared';
 import { api, ApiRequestError } from '../lib/api';
+import { generateWithFallback } from '../lib/generate';
 import { cn } from '../lib/format';
 import { notifyHaptic as notify } from '../lib/haptics';
 import { useIsDesktop } from '../lib/useIsDesktop';
@@ -43,13 +44,14 @@ export function StudioPage() {
 
   const generate = useMutation({
     mutationFn: () =>
-      api.generate({
-        car_id: car!.id,
-        photo_url: photoUrl ?? undefined,
+      generateWithFallback({
+        carId: car!.id,
+        sourceUrl: (photoUrl ?? car!.image_url)!,
+        photoUrl: photoUrl ?? undefined,
         options,
-        free_text: freeText.trim() || undefined,
+        freeText: freeText.trim() || undefined,
       }),
-    onSuccess: ({ generation }) => {
+    onSuccess: (generation) => {
       setGeneration(generation);
       notify('success');
       navigate('/result');
@@ -128,7 +130,10 @@ export function StudioPage() {
             </div>
 
             {/* ------------------------------------------------- qadamlar */}
-            <HomeSteps baseDelay={360} />
+            {/* Uch qadam kartochkalari faqat mobilda; desktopda hero o'zi yetarli */}
+            <div className="lg:hidden">
+              <HomeSteps baseDelay={360} />
+            </div>
 
             {/* ---------------------------------------------------- CTA */}
             <div className="mt-auto pt-5 pb-6 lg:mt-6 lg:pt-0 lg:pb-0">

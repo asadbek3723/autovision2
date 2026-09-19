@@ -93,8 +93,10 @@ export const useStudio = create<StudioState>()(
         vehicleModelId: state.vehicleModelId,
         options: state.options,
         freeText: state.freeText,
-        generation: state.generation,
-        results: state.results,
+        generation: state.generation?.id.startsWith('local-') ? null : state.generation,
+        results: Object.fromEntries(
+          Object.entries(state.results).filter(([, g]) => !g.id.startsWith('local-'))
+        ),
       }),
     }
   )
